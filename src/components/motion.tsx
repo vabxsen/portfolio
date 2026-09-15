@@ -132,10 +132,12 @@ export function ProjectSurface({
   children,
   style,
   className = '',
+  flat = false,
 }: {
   children: ReactNode;
   style: CSSProperties;
   className?: string;
+  flat?: boolean;
 }) {
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
@@ -163,8 +165,8 @@ export function ProjectSurface({
       -0.5,
       Math.min(0.5, (event.clientY - box.top) / Math.max(box.height, 1) - 0.5),
     );
-    tiltX.set(-y * 5);
-    tiltY.set(x * 5);
+    tiltX.set(flat ? 0 : -y * 5);
+    tiltY.set(flat ? 0 : x * 5);
     event.currentTarget.style.setProperty('--preview-x', `${x * 12}px`);
     event.currentTarget.style.setProperty('--preview-y', `${y * 8}px`);
     event.currentTarget.style.setProperty('--pointer-x', `${event.clientX - box.left}px`);
@@ -175,15 +177,19 @@ export function ProjectSurface({
       ref={ref}
       style={{
         ...style,
-        rotateX: reduced ? 0 : rotateX,
-        rotateY: reduced ? 0 : rotateY,
-        transformPerspective: 1200,
+        ...(flat
+          ? {}
+          : {
+              rotateX: reduced ? 0 : rotateX,
+              rotateY: reduced ? 0 : rotateY,
+              transformPerspective: 1200,
+            }),
       }}
       className={`project-card ${className}`}
       onPointerMove={move}
       onPointerLeave={reset}
       onPointerCancel={reset}
-      whileHover={reduced === false ? { y: -5 } : {}}
+      whileHover={!flat && reduced === false ? { y: -5 } : {}}
       transition={{ duration: 0.3 }}
     >
       {children}

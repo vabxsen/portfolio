@@ -68,14 +68,57 @@ h1 > .hero-name {
 .project-card:focus-within:before {
   opacity: 0.5;
 }
-.project-visual > .mock-window,
-.phone,
-.kimi-screen,
-.budgie-mobile {
+.project-visual > .mock-window {
   translate: var(--preview-x, 0px) var(--preview-y, 0px);
   transition:
     translate 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Keep screenshot text aligned to the pixel grid at rest and on hover. */
+.screenshot-card {
+  container-type: inline-size;
+}
+.screenshot-card .project-visual {
+  height: 550px;
+}
+.screenshot-card .phone,
+.screenshot-card .kimi-screen,
+.screenshot-card .budgie-mobile {
+  transform: none !important;
+  translate: none !important;
+  transition: none;
+}
+.screenshot-card .phone-front,
+.screenshot-card .kimi-screen,
+.screenshot-card .budgie-mobile {
+  width: 220px;
+  top: 10px;
+  right: 5%;
+}
+.screenshot-card .phone-back {
+  width: 170px;
+  right: 36%;
+}
+@container (max-width: 460px) {
+  .screenshot-card .project-visual {
+    height: 530px;
+  }
+  .screenshot-card .scoop-caption,
+  .screenshot-card .kimi-preview-copy,
+  .screenshot-card .budgie-preview-copy,
+  .screenshot-card .phone-back {
+    display: none;
+  }
+  .screenshot-card .phone-front,
+  .screenshot-card .kimi-screen,
+  .screenshot-card .budgie-mobile {
+    width: 210px;
+    max-width: calc(100% - 32px);
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+  }
 }
 @media (hover: hover) and (pointer: fine) {
   .project-card:hover {

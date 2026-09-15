@@ -7,8 +7,9 @@ import { ProjectPreview } from './project-preview';
 export function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <ProjectSurface
+      flat={project.slug === 'scoop' || Boolean(project.image)}
       style={{ '--project-accent': project.accent } as CSSProperties}
-      className={`project-${project.slug}`}
+      className={`project-${project.slug}${project.slug === 'scoop' || project.image ? ' screenshot-card' : ''}`}
     >
       <div className="project-visual">
         <div className="visual-meta">
