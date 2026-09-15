@@ -75,7 +75,7 @@ h1 > .hero-name {
     transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Keep screenshot text aligned to the pixel grid at rest and on hover. */
+/* Screenshots stay upright while their cards gently lift on hover. */
 .screenshot-card {
   container-type: inline-size;
 }

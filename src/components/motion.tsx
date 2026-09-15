@@ -189,7 +189,7 @@ export function ProjectSurface({
       onPointerMove={move}
       onPointerLeave={reset}
       onPointerCancel={reset}
-      whileHover={!flat && reduced === false ? { y: -5 } : {}}
+      whileHover={reduced === false ? { y: flat ? -4 : -5 } : {}}
       transition={{ duration: 0.3 }}
     >
       {children}
