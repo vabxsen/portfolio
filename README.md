@@ -29,7 +29,7 @@ Deploy the generated `out/` directory to a static host. The current private Site
 - `src/app/globals.css`: theme tokens, layout, responsive styles, and interface study styling.
 - `src/app/interactions.css` and `src/components/motion.tsx`: hover effects, cursor-responsive previews, magnetic links, entrance animations, and scroll progress. Pointer movement is limited to fine mouse pointers, and reduced-motion preferences disable spatial effects.
 
-Scoop and Kimi use actual screenshots from the author's public repositories. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
+Scoop and Kimi use actual screenshots from the author's public repositories. Budgie uses the screenshot supplied by the author. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
 
 `featuredProjectSlugs` controls the four projects shown initially: Scoop, Kimi, Budgie, and PricePilot. The remaining projects appear in the same gallery under a keyboard-accessible native Show More / Show Less disclosure that works without JavaScript.
 

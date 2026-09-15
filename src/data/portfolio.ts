@@ -59,8 +59,9 @@ export const projects: Project[] = [
     accent: '#dfd39b',
     github: 'https://github.com/vabxsen/budgie',
     demo: null,
-    image: null,
-    imageAlt: 'Budgie mobile subscription overview interface study',
+    image: '/projects/budgie-home.jpg',
+    imageAlt:
+      'Budgie subscription dashboard showing recurring spend, annual outlook, and upcoming payments',
     verified: true,
   },
   {

@@ -51,7 +51,8 @@ export function ProjectPreview({ project }: { project: Project }) {
         />
       </div>
     );
-  if (project.slug === 'budgie') return <BudgiePreview />;
+  if (project.slug === 'budgie' && project.image)
+    return <BudgiePreview image={project.image} imageAlt={project.imageAlt} />;
   if (project.image)
     return (
       <div className="project-image">
