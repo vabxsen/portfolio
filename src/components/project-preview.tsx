@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { Project } from '@/data/portfolio';
+import { BudgiePreview } from './budgie-preview';
 
 // Stylized interface studies summarize verified capabilities. They are labeled
 // "Interface study" on the card and are not presented as original screenshots.
@@ -50,41 +51,7 @@ export function ProjectPreview({ project }: { project: Project }) {
         />
       </div>
     );
-  if (project.slug === 'budgie')
-    return (
-      <div className="mock-window budgie-window" aria-hidden="true">
-        <MockBar name="Budgie" />
-        <div className="mock-main">
-          <div className="mock-kicker">A LITTLE BIRD. A CLEARER PICTURE.</div>
-          <h4>
-            Less surprise.
-            <br />
-            More peace of mind.
-          </h4>
-          <div className="budgie-summary">
-            <span>Monthly subscriptions</span>
-            <b>
-              ₹899<small> / month</small>
-            </b>
-          </div>
-          <div className="budgie-row">
-            <span>Music</span>
-            <span>Monthly</span>
-            <b>₹149</b>
-          </div>
-          <div className="budgie-row">
-            <span>Cloud storage</span>
-            <span>Monthly</span>
-            <b>₹250</b>
-          </div>
-          <div className="budgie-row">
-            <span>Creative tools</span>
-            <span>Monthly</span>
-            <b>₹500</b>
-          </div>
-        </div>
-      </div>
-    );
+  if (project.slug === 'budgie') return <BudgiePreview />;
   if (project.image)
     return (
       <div className="project-image">

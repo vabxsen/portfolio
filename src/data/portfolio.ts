@@ -60,7 +60,7 @@ export const projects: Project[] = [
     github: 'https://github.com/vabxsen/budgie',
     demo: null,
     image: null,
-    imageAlt: 'Budgie subscription overview interface study',
+    imageAlt: 'Budgie mobile subscription overview interface study',
     verified: true,
   },
   {
