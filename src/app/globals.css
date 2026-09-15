@@ -62,7 +62,7 @@
 }
 .kimi-preview-copy p {
   margin-top: 28px;
-  font: 0.65rem/1.8 monospace;
+  font: 600 0.65rem/1.8 var(--font-label);
   color: #aaa0bc;
 }
 .kimi-screen {
@@ -101,7 +101,7 @@
 }
 .budgie-preview-copy p {
   margin-top: 27px;
-  font: 0.65rem/1.8 monospace;
+  font: 600 0.65rem/1.8 var(--font-label);
   color: #aaa48c;
 }
 .budgie-mobile {
@@ -182,6 +182,7 @@
   --quiet: #787875;
   --line: #2a2a28;
   --accent: #d4bc94;
+  --font-label: var(--font-manrope), Arial, Helvetica, sans-serif;
   color-scheme: dark;
 }
 * {
@@ -322,7 +323,8 @@ button {
   display: flex;
   gap: 13px;
   align-items: center;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -418,7 +420,8 @@ h1 em {
 }
 .hero-side {
   text-align: right;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.1em;
   line-height: 1.9;
@@ -442,7 +445,8 @@ h1 em {
   display: flex;
   justify-content: space-between;
   color: var(--quiet);
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   letter-spacing: 0.08em;
   font-size: 11px;
 }
@@ -458,7 +462,8 @@ h1 em {
   display: flex;
   align-items: center;
   gap: 14px;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.08em;
   color: #a9a69e;
@@ -497,7 +502,8 @@ h2 span {
   justify-content: space-between;
   margin-top: 43px;
   margin-bottom: 16px;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--quiet);
   font-size: 11px;
@@ -562,7 +568,8 @@ h2 span {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 10px;
   letter-spacing: 0.04em;
   color: #96958c;
@@ -631,7 +638,8 @@ h2 span {
   line-height: 1.4;
   padding: 5px 8px;
   color: #a7a79d;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 550;
 }
 .project-bottom {
   display: flex;
@@ -694,7 +702,8 @@ h2 span {
   margin-top: 5px;
 }
 .scoop-caption small {
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 8px;
   line-height: 1.6;
   display: block;
@@ -804,7 +813,8 @@ h2 span {
   font-size: 7px;
   color: #a59fad;
   letter-spacing: 0.1em;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
 }
 .mock-main h4 {
   font-size: 22px;
@@ -1197,7 +1207,8 @@ h2 span {
   letter-spacing: -0.02em;
 }
 .stack-header > span {
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 10px;
   letter-spacing: 0.06em;
   color: var(--quiet);
@@ -1277,13 +1288,15 @@ h2 span {
   background: var(--accent);
 }
 .timeline-period {
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 11px;
   color: #b0a690;
   margin-top: 0;
 }
 .timeline-organization {
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 10px;
   color: #818177;
   letter-spacing: 0.03em;
@@ -1357,7 +1370,8 @@ h2 span {
   justify-content: space-between;
   margin-top: 25px;
   font-size: 10px;
-  font-family: monospace;
+  font-family: var(--font-label);
+  font-weight: 600;
   color: #8e8d82;
   gap: 9px;
 }
