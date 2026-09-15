@@ -7,14 +7,34 @@ import {
   useScroll,
   useSpring,
 } from 'framer-motion';
-import { useRef, type ReactNode, type CSSProperties, type PointerEvent } from 'react';
+import {
+  useContext,
+  createContext,
+  useRef,
+  type ReactNode,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react';
 
-export function MotionProvider({ children }: { children: ReactNode }) {
+const MotionEnabled = createContext(true);
+function useMotionPreference() {
+  const reduced = useReducedMotion();
+  return !useContext(MotionEnabled) || reduced;
+}
+export function MotionProvider({
+  children,
+  enabled = true,
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+}) {
   return (
-    <MotionConfig reducedMotion="user">
-      <ScrollProgress />
-      {children}
-    </MotionConfig>
+    <MotionEnabled.Provider value={enabled}>
+      <MotionConfig reducedMotion={enabled ? 'user' : 'always'}>
+        {enabled && <ScrollProgress />}
+        {children}
+      </MotionConfig>
+    </MotionEnabled.Provider>
   );
 }
 
@@ -36,7 +56,7 @@ function ScrollProgress() {
 }
 
 export function AnimatedName({ name }: { name: string }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionPreference();
   return (
     <span className="hero-name">
       <span className="sr-only">{name}</span>
@@ -72,7 +92,7 @@ export function MagneticLink({
   className: string;
   ariaLabel?: string;
 }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionPreference();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const smoothX = useSpring(x, spring);
@@ -115,7 +135,7 @@ export function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionPreference();
   return (
     <motion.div
       className={className}
@@ -140,7 +160,7 @@ export function ProjectSurface({
   flat?: boolean;
 }) {
   const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
+  const reduced = useMotionPreference();
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
   const rotateX = useSpring(tiltX, spring);

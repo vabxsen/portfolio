@@ -242,3 +242,10 @@ h1 > .hero-name {
     transform: none !important;
   }
 }
+.motion-disabled *,
+.motion-disabled *::before,
+.motion-disabled *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}

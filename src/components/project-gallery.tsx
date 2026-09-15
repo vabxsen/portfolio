@@ -1,10 +1,14 @@
 import { ChevronDown } from 'lucide-react';
-import { copy } from '@/data/copy';
-import { featuredProjectSlugs, projects } from '@/data/portfolio';
+import type { Content } from '@/lib/content';
+
 import { ProjectCard } from './project-card';
 import { Reveal } from './motion';
 
-export function ProjectGallery() {
+export function ProjectGallery({
+  projects,
+  featuredProjectSlugs,
+  copy,
+}: Pick<Content, 'projects' | 'featuredProjectSlugs' | 'copy'>) {
   const featured = featuredProjectSlugs.flatMap((slug) =>
     projects.filter((project) => project.slug === slug),
   );

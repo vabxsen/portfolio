@@ -1,42 +1,68 @@
-# Vaibhav Sen — Portfolio
+# Vaibhav Sen — Portfolio & owner console
 
-A responsive portfolio built with Next.js App Router, TypeScript, Tailwind CSS 4, Framer Motion, and Lucide. Statically exported for fast, portable hosting. Manrope is self-hosted; the live site makes no requests to Google Fonts or GitHub APIs.
+A responsive Next.js App Router portfolio with an owner-only content management console. It uses TypeScript, Tailwind CSS, Framer Motion, and Lucide. Vinext builds the existing App Router components for the Sites Cloudflare Workers runtime; D1 stores content and revision history, and R2 stores uploaded images. The former static export is no longer the deployable application.
 
-## Run locally
+## Admin access
 
-Requires Node.js 20.9+ and pnpm.
+Open `/admin/` or use the Admin link in the footer. Sign in with the ChatGPT account that owns the Site (`cheeseburst06@gmail.com`). Sites supplies authenticated identity headers. `ADMIN_OWNER_EMAIL` is a server environment setting used only to bootstrap the initial owner; after the first successful owner visit, authorization is pinned to that account’s stable, site-scoped user ID in D1. Other accounts cannot claim the console. There is no registration or browser-stored password.
+
+The production Site remains owner-private. The admin endpoints also enforce the owner check independently, so making the portfolio public later does not make editing public. The Worker is designed to run behind Sites’ trusted identity dispatcher, which controls the authenticated headers. Do not expose the Worker on another host without replacing that authentication boundary.
+
+## Editing and publishing
+
+- Profile: identity, biography, contact links, page title and search description.
+- Projects: add, edit, remove, reorder, select featured work, upload screenshots, and edit links and technologies.
+- Page copy, tech stack, journey and open source: edit all centralized content through structured fields.
+- Appearance: accent, background and text colors, motion, and section visibility.
+- Media library: upload original PNG, JPEG and WebP images up to 8 MB, then select them in projects.
+- Save draft keeps changes private. Preview opens the saved draft. Publish updates the server-rendered portfolio immediately without a source rebuild.
+- History restores a published version into a draft. Publishing that draft restores the live content. The initial portfolio is also retained as a revision.
+- Export/import backs up the content and appearance as validated JSON. Image references remain linked to this Site’s persistent media library; the JSON backup does not contain image bytes.
+
+This console edits portfolio content and supported design settings. Framework source, infrastructure secrets, domains and account sharing remain managed through the project and Sites tools.
+
+## Development
+
+Use Node.js 22.13+ and the pinned pnpm package manager:
 
 ```sh
 pnpm install
 pnpm dev
-```
-
-## Validate and export
-
-```sh
 pnpm typecheck
 pnpm build
 ```
 
-Deploy the generated `out/` directory to a static host. The current private Sites deployment is configured in `.openai/hosting.json`.
+The build emits `dist/server/index.js`, `dist/client`, and `dist/.openai` with the hosting manifest and generated migrations. Publishing uses the existing project ID in `.openai/hosting.json`. Do not deploy the old `out/` directory.
 
-## Update content
+For local preview, `.dev.vars` may set `ADMIN_OWNER_EMAIL=seedy@sites.test`. The bundled development sign-in helper uses that synthetic account only on loopback; it is not part of the deployed authentication path. Never set the production owner email to the test identity. `.dev.vars` is ignored and must never be packaged.
 
-- `src/data/portfolio.ts`: profile, verified project descriptions, project stacks and URLs, journey, technology groups, and repositories.
-- `src/data/copy.ts`: section headings, descriptions, and calls to action.
-- `public/projects/`: project screenshots. Set a project's `image` to its public path and provide `imageAlt` to replace an interface study.
-- `src/components/project-preview.tsx`: stylized interface studies, labeled as studies to distinguish them from real product screenshots.
-- `src/app/globals.css`: theme tokens, layout, responsive styles, and interface study styling.
-- `src/app/interactions.css` and `src/components/motion.tsx`: hover effects, cursor-responsive previews, magnetic links, entrance animations, and scroll progress. Pointer movement is limited to fine mouse pointers, and reduced-motion preferences disable spatial effects.
+Generate schema migrations with `pnpm exec drizzle-kit generate`. Build once, then apply each pending local migration in order:
 
-Scoop and Kimi use actual screenshots from the author's public repositories. Budgie uses the screenshot supplied by the author. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
+```sh
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_abandoned_king_bedlam.sql
+```
 
-`featuredProjectSlugs` controls the four projects shown initially: Scoop, Kimi, Budgie, and PricePilot. The remaining projects appear in the same gallery under a keyboard-accessible native Show More / Show Less disclosure that works without JavaScript.
+Published migrations are immutable. Append new migrations for future changes. Sites applies the packaged migrations before publishing.
 
-Project descriptions, technologies and URLs were checked against https://github.com/vabxsen and each linked README on 2026-09-15. GitHub update labels are a saved snapshot, not a live activity feed. Education, internship, and employment dates were not supplied and are not fabricated; replace or extend `journey` with verified milestones. No live web demo is listed for Gecko AI or Native AI.
+## Validation
 
-## Accessibility and behavior
+`tests/admin-integration.py` tests anonymous and non-owner denial, owner ID pinning, origin checks, unsafe URLs, optimistic concurrency, draft isolation, live server rendering, uploads, and restoring revisions against **local-only** D1/R2 at `127.0.0.1:5174`. It uses a synthetic owner and restores portfolio content after successful checks. Run it with Python while a built local Worker is running:
 
-Semantic landmarks and headings, keyboard focus styles, skip link, mobile navigation with Escape dismissal, visible link destinations, reduced-motion support, and content that remains readable without animations. Email opens the visitor's mail application; no messages are sent by the website itself.
+```sh
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --port 5174 --inspector-port 0 --var ADMIN_OWNER_EMAIL:seedy@sites.test
+python tests/admin-integration.py
+```
 
-No account, analytics, backend, tracking scripts, or external runtime data service is required.
+The local test database must be fresh or pinned to `local-owner`. The local proxy can return a restart response when switching identities on consecutive rejected POST requests; the suite separates those contexts with a read request. Runtime tests do not connect to production.
+
+## Source organization
+
+- `src/lib/content.ts`: content schema and initial content assembled from `src/data/`.
+- `src/lib/admin-auth.ts`: server authorization, origin validation and request limits.
+- `src/lib/storage.ts`: prepared D1 queries, drafts, publication and history.
+- `src/app/api/admin/[action]/route.ts`: protected editor API.
+- `src/components/admin-console.tsx`: owner editor.
+- `src/components/portfolio-view.tsx`: portfolio renderer shared by live and draft previews.
+- `src/app/globals.css`, `interactions.css`, `admin.css`: portfolio layout, motion, and console styling.
+
+Scoop and Kimi use screenshots from the author’s public repositories; Budgie uses the image supplied by the author. Remaining interface studies are illustrative. No analytics, tracking scripts, external runtime GitHub requests, or email-sending service is required.

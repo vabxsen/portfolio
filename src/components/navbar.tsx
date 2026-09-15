@@ -5,9 +5,12 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { MagneticLink } from './motion';
 import { navigation } from '@/data/portfolio';
 
-const sectionLinks = [...navigation, { label: 'GitHub', href: '#opensource' }];
-
-export function Navbar() {
+export function Navbar({ sections, name }: { sections: Record<string, boolean>; name: string }) {
+  const visibleNavigation = navigation.filter((item) => sections[item.href.slice(1)]);
+  const sectionLinks = [
+    ...visibleNavigation,
+    ...(sections.opensource ? [{ label: 'GitHub', href: '#opensource' }] : []),
+  ];
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('');
@@ -25,7 +28,7 @@ export function Navbar() {
       if (section) observer.observe(section);
     });
     return () => observer.disconnect();
-  }, []);
+  }, [sections.work, sections.about, sections.journey, sections.opensource]);
   useEffect(() => {
     if (!open) return;
     const close = (event: KeyboardEvent) => {
@@ -47,7 +50,7 @@ export function Navbar() {
   return (
     <header className="site-nav" ref={header}>
       <div className="nav-inner">
-        <a href="#top" className="wordmark" aria-label="Vaibhav Sen home">
+        <a href="#top" className="wordmark" aria-label={`${name} home`}>
           vs<span>.</span>
         </a>
         <nav className="desktop-nav" aria-label="Main navigation">
@@ -71,9 +74,11 @@ export function Navbar() {
             </a>
           ))}
         </nav>
-        <MagneticLink className="nav-contact" href="#contact">
-          Let’s talk <ArrowUpRight size={15} />
-        </MagneticLink>
+        {sections.contact && (
+          <MagneticLink className="nav-contact" href="#contact">
+            Let’s talk <ArrowUpRight size={15} />
+          </MagneticLink>
+        )}
         <button
           className="menu-toggle"
           ref={toggle}
@@ -86,9 +91,8 @@ export function Navbar() {
         </button>
         <nav id="mobile-menu" className="mobile-nav" hidden={!open} aria-label="Mobile navigation">
           {[
-            ...navigation,
-            { label: 'GitHub', href: '#opensource' },
-            { label: 'Contact', href: '#contact' },
+            ...sectionLinks,
+            ...(sections.contact ? [{ label: 'Contact', href: '#contact' }] : []),
           ].map((item) => (
             <a key={item.href} href={item.href} onClick={() => setOpen(false)}>
               {item.label}
