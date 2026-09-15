@@ -3,6 +3,7 @@ outputs/
 .sites-runtime/
 node_modules/
 .next/
+.vinext/
 out/
 *.tsbuildinfo
 .env*

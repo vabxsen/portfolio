@@ -20,7 +20,7 @@ def call(path,body=None,headers=None,method=None,retry=True):
  head,raw=result.stdout.split(b'\r\n\r\n',1)
  status=int(head.split(b' ')[1]);hs={}
  for line in head.decode().split('\r\n')[1:]:
-  if ': ' in line:k,v=line.split(': ',1);hs[k]=v
+  if ': ' in line:k,v=line.split(': ',1);hs[k.lower()]=v
  return status,raw,hs
 
 def check(name,condition):
@@ -28,13 +28,13 @@ def check(name,condition):
  print('PASS:',name)
 status,_,login_headers=call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'})
 check('password login succeeds',status==200)
-OWNER={'Cookie':login_headers['Set-Cookie'].split(';')[0]}
+OWNER={'Cookie':login_headers['set-cookie'].split(';')[0]}
 check('logout succeeds',call('/api/auth/logout/',{},headers=OWNER)[0]==200)
 check('logged-out session rejected',call('/api/admin/content/',headers=OWNER)[0]==401)
 call('/')
 status,_,login_headers=call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'})
 check('fresh login succeeds',status==200)
-expired_cookie=login_headers['Set-Cookie'].split(';')[0]
+expired_cookie=login_headers['set-cookie'].split(';')[0]
 import sqlite3,hashlib
 session_hash=hashlib.sha256(expired_cookie.split('=',1)[1].encode()).hexdigest()
 changed=False

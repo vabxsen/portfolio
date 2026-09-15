@@ -20,7 +20,7 @@ def call(path,body=None,headers=None,method=None,retry=True):
  head,raw=result.stdout.split(b'\r\n\r\n',1)
  status=int(head.split(b' ')[1]);hs={}
  for line in head.decode().split('\r\n')[1:]:
-  if ': ' in line:k,v=line.split(': ',1);hs[k]=v
+  if ': ' in line:k,v=line.split(': ',1);hs[k.lower()]=v
  return status,raw,hs
 
 def check(name,condition):
@@ -34,13 +34,13 @@ check('incorrect password rejected',call('/api/auth/login/',{'email':'seedy@site
 call('/')
 status,raw,login_headers=call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'})
 check('correct credentials accepted',status==200)
-cookie=login_headers['Set-Cookie']
+cookie=login_headers['set-cookie']
 check('session cookie has secure attributes',all(value in cookie for value in ['HttpOnly','Secure','SameSite=Strict','Path=/']))
 OWNER={'Cookie':cookie.split(';')[0]}
 status,raw,headers=call('/api/admin/content/',headers=OWNER)
 check('owner can load draft',status==200)
 s=json.loads(raw);original=copy.deepcopy(s['content']);version=s['version']
-check('admin API is not cached','no-store' in headers.get('Cache-Control',''))
+check('admin API is not cached','no-store' in headers.get('cache-control',''))
 check('forged session rejected',call('/api/admin/content/',headers={'Cookie':'__Host-portfolio_admin='+'a'*64})[0]==401)
 bad=copy.deepcopy(original);bad['projects'][0]['demo']='javascript:alert(1)'
 check('unsafe project URL rejected',call('/api/admin/save/',{'content':bad,'version':version},headers=OWNER)[0]==400)
@@ -69,7 +69,7 @@ check('test content reset',status==200)
 check('test publication reset',call('/api/admin/publish/',{'version':json.loads(raw)['version']},headers=OWNER)[0]==200)
 status,adminhtml,head=call('/admin/',headers=OWNER);Path('work/admin-dashboard.html').write_bytes(adminhtml)
 check('owner dashboard renders',status==200 and b'Your publishing flow' in adminhtml)
-check('admin page is not cached','no-store' in head.get('Cache-Control',''))
+check('admin page is not cached','no-store' in head.get('cache-control',''))
 
 
 

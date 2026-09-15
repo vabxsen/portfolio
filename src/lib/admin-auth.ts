@@ -21,9 +21,7 @@ export function checkWriteOrigin(request: Request) {
   )
     throw new HttpError(403, 'Request origin was not accepted. Refresh this page and try again.');
 }
-export async function limitedJson(request: Request, limit = 512000) {
-  if (!request.headers.get('content-type')?.startsWith('application/json'))
-    throw new HttpError(415, 'JSON required.');
+async function limitedBody(request: Request, limit: number) {
   const reader = request.body?.getReader();
   if (!reader) throw new HttpError(400, 'Missing request body.');
   let length = 0;
@@ -44,9 +42,20 @@ export async function limitedJson(request: Request, limit = 512000) {
     bytes.set(c, offset);
     offset += c.length;
   }
+  return new TextDecoder().decode(bytes);
+}
+export async function limitedJson(request: Request, limit = 512000) {
+  if (!request.headers.get('content-type')?.startsWith('application/json'))
+    throw new HttpError(415, 'JSON required.');
+  const body = await limitedBody(request, limit);
   try {
-    return JSON.parse(new TextDecoder().decode(bytes));
+    return JSON.parse(body);
   } catch {
     throw new HttpError(400, 'Invalid JSON.');
   }
+}
+export async function limitedUrlEncoded(request: Request, limit = 2048) {
+  if (!request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded'))
+    throw new HttpError(415, 'Form data required.');
+  return new URLSearchParams(await limitedBody(request, limit));
 }

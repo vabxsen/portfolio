@@ -9,12 +9,12 @@ import {
   LoaderCircle,
   CircleAlert,
 } from 'lucide-react';
-export function AdminLogin() {
+export function AdminLogin({ initialError = '' }: { initialError?: string }) {
   const [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [visible, setVisible] = useState(false),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(initialError);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -58,6 +58,8 @@ export function AdminLogin() {
           <h1 id="admin-login-title">Welcome back.</h1>
           <p className="admin-login-intro">Sign in to edit your portfolio.</p>
           <form
+            action="/api/auth/login/"
+            method="post"
             onSubmit={submit}
             aria-busy={busy}
             aria-describedby={error ? 'admin-login-error' : undefined}
@@ -68,7 +70,7 @@ export function AdminLogin() {
                 <label htmlFor="admin-email">Email address</label>
                 <input
                   id="admin-email"
-                  name="username"
+                  name="email"
                   type="email"
                   autoComplete="username"
                   autoCapitalize="none"
