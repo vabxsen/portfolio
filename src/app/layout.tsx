@@ -7,6 +7,7 @@ const manrope = localFont({
   display: 'swap',
 });
 import './globals.css';
+import './interactions.css';
 export const metadata: Metadata = {
   title: { default: 'Vaibhav Sen — Developer & UI/UX Designer', template: '%s — Vaibhav Sen' },
   description: profile.introduction,

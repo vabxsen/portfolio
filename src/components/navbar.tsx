@@ -1,9 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { MagneticLink } from './motion';
 import { navigation } from '@/data/portfolio';
 
+const sectionLinks = [...navigation, { label: 'GitHub', href: '#opensource' }];
+
 export function Navbar() {
+  const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('');
   const toggle = useRef<HTMLButtonElement>(null);
@@ -15,7 +20,7 @@ export function Navbar() {
       },
       { rootMargin: '-15% 0px -55% 0px' },
     );
-    navigation.forEach((item) => {
+    sectionLinks.forEach((item) => {
       const section = document.querySelector(item.href);
       if (section) observer.observe(section);
     });
@@ -46,20 +51,29 @@ export function Navbar() {
           vs<span>.</span>
         </a>
         <nav className="desktop-nav" aria-label="Main navigation">
-          {navigation.map((item) => (
+          {sectionLinks.map((item) => (
             <a
               key={item.href}
               href={item.href}
               aria-current={active === item.href ? 'location' : undefined}
             >
               {item.label}
+              {active === item.href && (
+                <motion.span
+                  className="nav-active-line"
+                  layoutId="active-section"
+                  aria-hidden="true"
+                  transition={
+                    reduced ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32 }
+                  }
+                />
+              )}
             </a>
           ))}
-          <a href="#opensource">GitHub</a>
         </nav>
-        <a className="nav-contact" href="#contact">
+        <MagneticLink className="nav-contact" href="#contact">
           Let’s talk <ArrowUpRight size={15} />
-        </a>
+        </MagneticLink>
         <button
           className="menu-toggle"
           ref={toggle}

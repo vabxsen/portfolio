@@ -422,15 +422,14 @@ button {
 .desktop-nav a[aria-current] {
   color: var(--fg);
 }
-.desktop-nav a[aria-current]:after {
-  content: '';
-  height: 3px;
-  width: 3px;
+.nav-active-line {
+  height: 2px;
+  width: 100%;
   position: absolute;
   background: var(--accent);
-  border-radius: 50%;
+  border-radius: 2px;
   bottom: -9px;
-  left: 50%;
+  left: 0;
 }
 .nav-contact {
   display: flex;

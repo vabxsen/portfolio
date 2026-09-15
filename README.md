@@ -27,6 +27,7 @@ Deploy the generated `out/` directory to a static host. The current private Site
 - `public/projects/`: project screenshots. Set a project's `image` to its public path and provide `imageAlt` to replace an interface study.
 - `src/components/project-preview.tsx`: stylized interface studies, labeled as studies to distinguish them from real product screenshots.
 - `src/app/globals.css`: theme tokens, layout, responsive styles, and interface study styling.
+- `src/app/interactions.css` and `src/components/motion.tsx`: hover effects, cursor-responsive previews, magnetic links, entrance animations, and scroll progress. Pointer movement is limited to fine mouse pointers, and reduced-motion preferences disable spatial effects.
 
 Scoop and Kimi use actual screenshots from the author's public repositories. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
 

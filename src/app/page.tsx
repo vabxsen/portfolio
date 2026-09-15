@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { profile, stack, journey, approach, repositories } from '@/data/portfolio';
 import { Navbar } from '@/components/navbar';
-import { MotionProvider, Reveal } from '@/components/motion';
+import { AnimatedName, MagneticLink, MotionProvider, Reveal } from '@/components/motion';
 import { ProjectGallery } from '@/components/project-gallery';
 
 export default function Home() {
@@ -30,7 +30,7 @@ export default function Home() {
               <span className="eyebrow-line" /> {copy.heroEyebrow}
             </div>
             <h1 id="hero-title">
-              {profile.name}
+              <AnimatedName name={profile.name} />
               <span>
                 Developer <em>&</em>
                 <br className="mobile-break" /> UI/UX Designer<span className="hero-period">.</span>
@@ -40,9 +40,9 @@ export default function Home() {
               <div>
                 <p className="hero-intro">{profile.introduction}</p>
                 <div className="hero-actions">
-                  <a className="button button-primary" href="#work">
+                  <MagneticLink className="button button-primary" href="#work">
                     View my work <ArrowDown size={16} />
-                  </a>
+                  </MagneticLink>
                   <a
                     className="button button-secondary"
                     href={profile.github || '#opensource'}
@@ -239,13 +239,13 @@ export default function Home() {
                 <span>{copy.contact.title[1]}</span>
                 <em>{copy.contact.title[2]}</em>
               </h2>
-              <a
+              <MagneticLink
                 className="contact-orb"
                 href={`mailto:${profile.email}`}
-                aria-label="Email Vaibhav Sen"
+                ariaLabel="Email Vaibhav Sen"
               >
                 <ArrowUpRight strokeWidth={1} size={60} />
-              </a>
+              </MagneticLink>
             </div>
             <div className="contact-bottom">
               <p>{copy.contact.description}</p>

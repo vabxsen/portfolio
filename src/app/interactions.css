@@ -1,0 +1,201 @@
+/* Motion enhances the existing links and content without taking over scrolling. */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  z-index: 60;
+  background: var(--accent);
+  transform-origin: left;
+  pointer-events: none;
+}
+h1 > .hero-name {
+  display: block;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: 1.15;
+  color: inherit;
+  margin: 0;
+}
+.hero-word-mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: bottom;
+  padding-bottom: 0.05em;
+  margin-bottom: -0.05em;
+}
+.hero-word-mask > span {
+  display: inline-block;
+}
+.hero-word-mask:not(:last-child) {
+  margin-right: 0.2em;
+}
+.button,
+.nav-contact,
+.contact-orb {
+  position: relative;
+}
+.button svg,
+.nav-contact svg,
+.hero-contact svg,
+.text-link svg,
+.email-link svg,
+.project-actions svg,
+.project-bottom svg,
+.repo-top > svg:last-child {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.email-link {
+  background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 1px no-repeat;
+  transition:
+    background-size 0.4s,
+    color 0.25s;
+}
+.project-card {
+  transition:
+    border-color 0.35s,
+    box-shadow 0.35s;
+}
+.project-card:before {
+  background: radial-gradient(
+    360px circle at var(--pointer-x, 50%) var(--pointer-y, 0%),
+    color-mix(in srgb, var(--project-accent) 12%, transparent),
+    transparent 75%
+  );
+}
+.project-card:focus-within {
+  border-color: var(--accent);
+}
+.project-card:focus-within:before {
+  opacity: 0.5;
+}
+.project-visual > .mock-window,
+.phone,
+.kimi-screen,
+.budgie-mobile {
+  translate: var(--preview-x, 0px) var(--preview-y, 0px);
+  transition:
+    translate 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    box-shadow: 0 18px 42px #0004;
+  }
+  .button-primary:hover svg {
+    transform: translateY(3px);
+  }
+  .nav-contact:hover svg,
+  .hero-contact:hover svg,
+  .text-link:hover svg,
+  .email-link:hover svg:last-child,
+  .project-actions a:hover svg,
+  .project-bottom a:hover svg,
+  .repo-card:hover .repo-top > svg:last-child {
+    transform: translate(2px, -2px);
+  }
+  .email-link:hover {
+    background-size: 100% 1px;
+  }
+  .repo-card {
+    transition:
+      translate 0.3s,
+      background 0.3s,
+      border-color 0.3s;
+  }
+  .repo-card:hover {
+    translate: 0 -4px;
+  }
+  .stack-group li {
+    transition:
+      background 0.25s,
+      color 0.25s,
+      border-color 0.25s;
+  }
+  .stack-group li:hover {
+    color: var(--fg);
+    border-color: #70634e;
+    background: #28241d;
+  }
+  .contact-orb:hover svg {
+    transform: translate(4px, -4px);
+  }
+  .contact-orb svg {
+    transition: transform 0.35s;
+  }
+}
+@keyframes menu-item-enter {
+  from {
+    opacity: 0.35;
+    transform: translateY(-7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mobile-nav:not([hidden]) > a {
+  animation: menu-item-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mobile-nav > a:nth-child(2) {
+  animation-delay: 35ms;
+}
+.mobile-nav > a:nth-child(3) {
+  animation-delay: 70ms;
+}
+.mobile-nav > a:nth-child(4) {
+  animation-delay: 105ms;
+}
+.mobile-nav > a:nth-child(5) {
+  animation-delay: 140ms;
+}
+/* Native disclosure stays usable in browsers without intrinsic-size transitions. */
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+  .project-disclosure {
+    interpolate-size: allow-keywords;
+  }
+  .project-disclosure::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 0.6s allow-discrete;
+  }
+  .project-disclosure[open]::details-content {
+    block-size: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress {
+    display: none;
+  }
+  .hero-word-mask > span {
+    filter: none !important;
+    transform: none !important;
+  }
+  .project-visual > .mock-window,
+  .phone,
+  .kimi-screen,
+  .budgie-mobile,
+  .repo-card {
+    translate: none !important;
+  }
+  .button,
+  .nav-contact,
+  .contact-orb {
+    transform: none !important;
+  }
+  .project-disclosure::details-content {
+    transition: none !important;
+  }
+  .button svg,
+  .nav-contact svg,
+  .hero-contact svg,
+  .text-link svg,
+  .email-link svg,
+  .project-actions svg,
+  .project-bottom svg,
+  .repo-top > svg:last-child,
+  .contact-orb svg {
+    transform: none !important;
+  }
+}
