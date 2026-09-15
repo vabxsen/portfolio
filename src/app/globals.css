@@ -1,4 +1,141 @@
 @import 'tailwindcss';
+
+.project-disclosure {
+  margin-top: 32px;
+}
+.project-disclosure > summary {
+  width: fit-content;
+  margin: 0 auto;
+  cursor: pointer;
+  list-style: none;
+}
+.project-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.project-disclosure > summary::marker {
+  content: '';
+}
+.project-disclosure > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+.project-disclosure .disclosure-less {
+  display: none;
+}
+.project-disclosure[open] .disclosure-more {
+  display: none;
+}
+.project-disclosure[open] .disclosure-less {
+  display: inline;
+}
+.project-disclosure[open] > summary svg {
+  transform: rotate(180deg);
+}
+.project-disclosure > summary svg {
+  transition: transform 0.2s ease;
+}
+.project-disclosure > .projects-grid {
+  margin-top: 28px;
+}
+.kimi-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.kimi-preview-copy {
+  position: absolute;
+  left: 7%;
+  top: 23%;
+  width: 42%;
+  color: #cfc0ed;
+}
+.kimi-preview-copy > span {
+  font-size: 1.6rem;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+.kimi-preview-copy h4 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 12px;
+}
+.kimi-preview-copy p {
+  margin-top: 28px;
+  font: 0.65rem/1.8 monospace;
+  color: #aaa0bc;
+}
+.kimi-screen {
+  position: absolute;
+  width: 38%;
+  height: auto;
+  right: 8%;
+  top: 14px;
+  border: 5px solid #514863;
+  border-radius: 23px;
+  transform: rotate(5deg);
+  box-shadow: 0 18px 35px #0005;
+}
+.budgie-window {
+  background: #191d18;
+}
+.budgie-window .mock-kicker {
+  color: #b6b393;
+}
+.budgie-summary {
+  margin: 17px 0 7px;
+  padding: 11px 13px;
+  border: 1px solid #55553d;
+  border-radius: 6px;
+  background: #292d22;
+}
+.budgie-summary > span {
+  display: block;
+  font-size: 9px;
+  color: #c3c3a5;
+}
+.budgie-summary > b {
+  display: block;
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #e9dfac;
+}
+.budgie-summary small {
+  font-size: 9px;
+  font-weight: 400;
+}
+.budgie-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ffffff0b;
+  font-size: 9px;
+  color: #c9cbb9;
+}
+.budgie-row > span:nth-child(2) {
+  margin-left: auto;
+  color: #969a8a;
+}
+.budgie-row b {
+  width: 35px;
+  text-align: right;
+  font-weight: 400;
+}
+@media (max-width: 700px) {
+  .kimi-preview-copy {
+    left: 7%;
+    width: 43%;
+  }
+  .kimi-preview-copy h4 {
+    font-size: 0.9rem;
+  }
+  .kimi-screen {
+    width: 42%;
+    right: 5%;
+    top: 20px;
+  }
+}
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
@@ -1839,8 +1976,13 @@ h2 span {
 
 /* Readable portfolio text; smaller sizes are confined to illustrative product UIs. */
 @media (max-width: 1000px) {
-  .phone-back { display: none; }
-  .phone-front { right: 17px; width: 155px; }
+  .phone-back {
+    display: none;
+  }
+  .phone-front {
+    right: 17px;
+    width: 155px;
+  }
 }
 .project-description,
 .timeline p,

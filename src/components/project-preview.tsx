@@ -25,6 +25,66 @@ import type { Project } from '@/data/portfolio';
 // Stylized interface studies summarize verified capabilities. They are labeled
 // "Interface study" on the card and are not presented as original screenshots.
 export function ProjectPreview({ project }: { project: Project }) {
+  if (project.slug === 'kimi' && project.image)
+    return (
+      <div className="kimi-preview">
+        <div className="kimi-preview-copy" aria-hidden="true">
+          <span>Kimi.</span>
+          <h4>
+            Small steps.
+            <br />
+            Big happy energy.
+          </h4>
+          <p>
+            A LITTLE RITUAL.
+            <br />A BETTER DAY.
+          </p>
+        </div>
+        <Image
+          className="kimi-screen"
+          src={project.image}
+          alt={project.imageAlt}
+          width={1080}
+          height={2400}
+          sizes="(max-width: 700px) 160px, 210px"
+        />
+      </div>
+    );
+  if (project.slug === 'budgie')
+    return (
+      <div className="mock-window budgie-window" aria-hidden="true">
+        <MockBar name="Budgie" />
+        <div className="mock-main">
+          <div className="mock-kicker">A LITTLE BIRD. A CLEARER PICTURE.</div>
+          <h4>
+            Less surprise.
+            <br />
+            More peace of mind.
+          </h4>
+          <div className="budgie-summary">
+            <span>Monthly subscriptions</span>
+            <b>
+              ₹899<small> / month</small>
+            </b>
+          </div>
+          <div className="budgie-row">
+            <span>Music</span>
+            <span>Monthly</span>
+            <b>₹149</b>
+          </div>
+          <div className="budgie-row">
+            <span>Cloud storage</span>
+            <span>Monthly</span>
+            <b>₹250</b>
+          </div>
+          <div className="budgie-row">
+            <span>Creative tools</span>
+            <span>Monthly</span>
+            <b>₹500</b>
+          </div>
+        </div>
+      </div>
+    );
   if (project.image)
     return (
       <div className="project-image">

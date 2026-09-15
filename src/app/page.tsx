@@ -10,10 +10,10 @@ import {
   PenTool,
   Terminal,
 } from 'lucide-react';
-import { profile, projects, stack, journey, approach, repositories } from '@/data/portfolio';
+import { profile, stack, journey, approach, repositories } from '@/data/portfolio';
 import { Navbar } from '@/components/navbar';
 import { MotionProvider, Reveal } from '@/components/motion';
-import { ProjectCard } from '@/components/project-card';
+import { ProjectGallery } from '@/components/project-gallery';
 
 export default function Home() {
   return (
@@ -86,18 +86,8 @@ export default function Home() {
               }
               description={copy.work.description}
             />
-            <div className="work-caption">
-              <span>{copy.work.caption}</span>
-              <span>{String(projects.length).padStart(2, '0')} SELECTED PROJECTS</span>
-            </div>
           </Reveal>
-          <div className="projects-grid">
-            {projects.map((project, index) => (
-              <Reveal key={project.slug} delay={(index % 2) * 0.07}>
-                <ProjectCard project={project} index={index} />
-              </Reveal>
-            ))}
-          </div>
+          <ProjectGallery />
         </section>
         <section id="about" className="about-section section-space" aria-labelledby="about-heading">
           <Reveal className="about-grid">

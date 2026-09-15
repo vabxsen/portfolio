@@ -4,6 +4,8 @@ export const copy = {
   heroSide: ['THOUGHTFULLY DESIGNED.', 'CAREFULLY ENGINEERED.'],
   platforms: 'WEB · MOBILE · DESKTOP · AI',
   work: {
+    showMore: 'Show More',
+    showLess: 'Show Less',
     label: 'SELECTED WORK',
     title: ['Less talk.', 'More shipped.'],
     description: 'A collection of products, experiments, and ideas brought to life.',

@@ -36,6 +36,34 @@ export const navigation = [
 ];
 export const projects: Project[] = [
   {
+    slug: 'kimi',
+    name: 'Kimi',
+    category: 'Small rituals. A brighter every day.',
+    description:
+      'A native Android habit tracker with daily rituals, streaks, a reflection journal, and progress insights. Built with a colorful, considered interface.',
+    technologies: ['Kotlin', 'Jetpack Compose', 'Firebase'],
+    accent: '#bca4eb',
+    github: 'https://github.com/vabxsen/Kimi',
+    demo: null,
+    image: '/projects/kimi-today.png',
+    imageAlt: 'Kimi Android Today screen with habits, streaks, and daily progress in dark mode',
+    verified: true,
+  },
+  {
+    slug: 'budgie',
+    name: 'Budgie',
+    category: 'A clearer picture of your subscriptions.',
+    description:
+      'An Android subscription manager for recurring payments, renewal reminders, budgets, and spending insights, with a companion web prototype.',
+    technologies: ['Kotlin', 'Jetpack Compose', 'WorkManager', 'React'],
+    accent: '#dfd39b',
+    github: 'https://github.com/vabxsen/budgie',
+    demo: null,
+    image: null,
+    imageAlt: 'Budgie subscription overview interface study',
+    verified: true,
+  },
+  {
     slug: 'scoop',
     name: 'Scoop',
     category: 'Your media. Your device.',
@@ -148,6 +176,9 @@ export const projects: Project[] = [
     verified: true,
   },
 ];
+
+// Display these projects first, in this order. All others remain under Show More.
+export const featuredProjectSlugs = ['scoop', 'kimi', 'budgie', 'pricepilot'] as const;
 
 export const stack = [
   {

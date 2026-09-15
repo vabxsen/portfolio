@@ -28,7 +28,9 @@ Deploy the generated `out/` directory to a static host. The current private Site
 - `src/components/project-preview.tsx`: stylized interface studies, labeled as studies to distinguish them from real product screenshots.
 - `src/app/globals.css`: theme tokens, layout, responsive styles, and interface study styling.
 
-Scoop uses actual screenshots from the author's public repository. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
+Scoop and Kimi use actual screenshots from the author's public repositories. Other project previews are illustrative interface studies based on repository descriptions, not screenshots of the deployed apps. Preview statistics are sample UI data, not usage or business results.
+
+`featuredProjectSlugs` controls the four projects shown initially: Scoop, Kimi, Budgie, and PricePilot. The remaining projects appear in the same gallery under a keyboard-accessible native Show More / Show Less disclosure that works without JavaScript.
 
 Project descriptions, technologies and URLs were checked against https://github.com/vabxsen and each linked README on 2026-09-15. GitHub update labels are a saved snapshot, not a live activity feed. Education, internship, and employment dates were not supplied and are not fabricated; replace or extend `journey` with verified milestones. No live web demo is listed for Gecko AI or Native AI.
 

@@ -64,7 +64,7 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
             <span>
               {project.slug === 'native-ai'
                 ? 'Desktop application'
-                : project.slug === 'gecko-ai'
+                : ['gecko-ai', 'kimi', 'budgie'].includes(project.slug)
                   ? 'Android project'
                   : 'Demo coming soon'}
             </span>
