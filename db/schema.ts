@@ -26,3 +26,13 @@ export const media = sqliteTable('site_media', {
   size: integer('size').notNull(),
   createdAt: text('created_at').notNull(),
 });
+export const sessions = sqliteTable('admin_sessions', {
+  tokenHash: text('token_hash').primaryKey(),
+  credentialHash: text('credential_hash').notNull(),
+  expiresAt: integer('expires_at').notNull(),
+});
+export const loginLimits = sqliteTable('admin_login_limits', {
+  key: text('key').primaryKey(),
+  attempts: integer('attempts').notNull(),
+  windowStart: integer('window_start').notNull(),
+});

@@ -1,7 +1,7 @@
 import urllib.request, urllib.error, json, copy, time
 from pathlib import Path
 BASE='http://127.0.0.1:5174'
-OWNER={'oai-authenticated-user-id':'local-owner','oai-authenticated-user-email':'seedy@sites.test'}
+OWNER={}
 OTHER={'oai-authenticated-user-id':'other-user','oai-authenticated-user-email':'other@example.test'}
 def call(path,body=None,headers=None,method=None,retry=True):
  import subprocess
@@ -13,6 +13,9 @@ def call(path,body=None,headers=None,method=None,retry=True):
  if body is not None:args+=['--data-binary','@-']
  if method:args+=['-X',method]
  result=subprocess.run(args,input=body,capture_output=True)
+ if result.returncode and body is None:
+  import time;time.sleep(0.2)
+  result=subprocess.run(args,input=body,capture_output=True)
  if result.returncode:raise RuntimeError(result.stderr.decode())
  head,raw=result.stdout.split(b'\r\n\r\n',1)
  status=int(head.split(b' ')[1]);hs={}
@@ -24,12 +27,21 @@ def check(name,condition):
  assert condition,name
  print('PASS:',name)
 check('anonymous content rejected',call('/api/admin/content/')[0]==401)
-check('non-owner cannot bootstrap',call('/api/admin/content/',headers=OTHER)[0]==403)
+check('platform identity alone does not grant access',call('/api/admin/content/',headers=OTHER)[0]==401)
+check('password login form renders',b'admin-password' in call('/admin/')[1])
+call('/')
+check('incorrect password rejected',call('/api/auth/login/',{'email':'seedy@sites.test','password':'wrong-password'})[0]==401)
+call('/')
+status,raw,login_headers=call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'})
+check('correct credentials accepted',status==200)
+cookie=login_headers['Set-Cookie']
+check('session cookie has secure attributes',all(value in cookie for value in ['HttpOnly','Secure','SameSite=Strict','Path=/']))
+OWNER={'Cookie':cookie.split(';')[0]}
 status,raw,headers=call('/api/admin/content/',headers=OWNER)
 check('owner can load draft',status==200)
 s=json.loads(raw);original=copy.deepcopy(s['content']);version=s['version']
 check('admin API is not cached','no-store' in headers.get('Cache-Control',''))
-check('different subject denied even with bootstrap email',call('/api/admin/content/',headers={**OWNER,'oai-authenticated-user-id':'another-subject'})[0]==403)
+check('forged session rejected',call('/api/admin/content/',headers={'Cookie':'__Host-portfolio_admin='+'a'*64})[0]==401)
 bad=copy.deepcopy(original);bad['projects'][0]['demo']='javascript:alert(1)'
 check('unsafe project URL rejected',call('/api/admin/save/',{'content':bad,'version':version},headers=OWNER)[0]==400)
 updated=copy.deepcopy(original);updated['profile']['name']='Local draft verification'
@@ -66,4 +78,5 @@ cross=call('/api/admin/save/',{},headers={**OWNER,'Origin':'https://attacker.exa
 call('/') # Separate local proxy authentication contexts.
 check('anonymous save rejected',call('/api/admin/save/',{'content':original,'version':version})[0]==401)
 
-print('All admin integration checks passed against local D1/R2.')
+call('/')
+print('Password login and portfolio editing integration checks passed.')

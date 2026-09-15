@@ -81,13 +81,11 @@ export function AdminConsole({
   initialVersion,
   initialPublishedVersion,
   email,
-  signOut,
 }: {
   initialContent: Content;
   initialVersion: number;
   initialPublishedVersion: number;
   email: string;
-  signOut: string;
 }) {
   const [content, setContent] = useState(initialContent),
     [saved, setSaved] = useState(JSON.stringify(initialContent)),
@@ -433,9 +431,22 @@ export function AdminConsole({
             <strong>Owner</strong>
             <small>{email}</small>
           </div>
-          <a href={signOut} target="_top" aria-label="Sign out">
+          <button
+            className="admin-signout"
+            type="button"
+            aria-label="Sign out"
+            disabled={busy}
+            onClick={() => {
+              if (dirty && !window.confirm('Sign out and discard unsaved edits?')) return;
+              void run(async () => {
+                const response = await fetch('/api/auth/logout/', { method: 'POST' });
+                if (!response.ok) throw new Error('Unable to sign out. Please try again.');
+                window.location.assign('/admin/');
+              });
+            }}
+          >
             <LogOut size={17} />
-          </a>
+          </button>
         </div>
       </aside>
       <main className="admin-main">

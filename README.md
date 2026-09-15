@@ -4,9 +4,13 @@ A responsive Next.js App Router portfolio with an owner-only content management 
 
 ## Admin access
 
-Open `/admin/` or use the Admin link in the footer. Sign in with the ChatGPT account that owns the Site (`cheeseburst06@gmail.com`). Sites supplies authenticated identity headers. `ADMIN_OWNER_EMAIL` is a server environment setting used only to bootstrap the initial owner; after the first successful owner visit, authorization is pinned to that account’s stable, site-scoped user ID in D1. Other accounts cannot claim the console. There is no registration or browser-stored password.
+Open `/admin/` or use the Admin link in the footer. Sign in with the configured owner email and password. The production owner email is `cheeseburst06@gmail.com`; the password is never stored in the source or sent to the browser. `ADMIN_PASSWORD_HASH` is a secret server setting containing a bcrypt cost-12 hash. There is no registration or ChatGPT-header bypass for console access.
 
-The production Site remains owner-private. The admin endpoints also enforce the owner check independently, so making the portfolio public later does not make editing public. The Worker is designed to run behind Sites’ trusted identity dispatcher, which controls the authenticated headers. Do not expose the Worker on another host without replacing that authentication boundary.
+Successful login creates a random 256-bit session token in a Secure, HttpOnly, SameSite=Strict, host-only cookie. Only its SHA-256 digest is stored in D1. Sessions expire after 12 hours, logout revokes them server-side, and changing the configured email/password hash invalidates existing sessions. Login attempts are limited to 5 per address and 30 total per 15-minute window. Login and all write operations require a same-origin request.
+
+The Site remains owner-private at the hosting level. Sites may still require platform sign-in to open a private Site; the admin console additionally requires the configured email and password. Changing the hosting audience is a separate explicit action.
+
+To change the password later, generate a fresh bcrypt cost-12 hash in a trusted environment, update the secret `ADMIN_PASSWORD_HASH` through Sites environment settings, and redeploy. Never commit or publish the password or its hash.
 
 ## Editing and publishing
 
@@ -34,7 +38,7 @@ pnpm build
 
 The build emits `dist/server/index.js`, `dist/client`, and `dist/.openai` with the hosting manifest and generated migrations. Publishing uses the existing project ID in `.openai/hosting.json`. Do not deploy the old `out/` directory.
 
-For local preview, `.dev.vars` may set `ADMIN_OWNER_EMAIL=seedy@sites.test`. The bundled development sign-in helper uses that synthetic account only on loopback; it is not part of the deployed authentication path. Never set the production owner email to the test identity. `.dev.vars` is ignored and must never be packaged.
+For local preview, use an ignored `.dev.vars` file with `ADMIN_OWNER_EMAIL=seedy@sites.test` and a cost-12 bcrypt hash of the separate test password `Local-owner-test!6` as `ADMIN_PASSWORD_HASH`. These are synthetic local credentials, never the production credentials. Pass the local hash as a Wrangler `--var` setting when testing the built Worker. `.dev.vars` must never be committed or packaged.
 
 Generate schema migrations with `pnpm exec drizzle-kit generate`. Build once, then apply each pending local migration in order:
 
@@ -46,19 +50,21 @@ Published migrations are immutable. Append new migrations for future changes. Si
 
 ## Validation
 
-`tests/admin-integration.py` tests anonymous and non-owner denial, owner ID pinning, origin checks, unsafe URLs, optimistic concurrency, draft isolation, live server rendering, uploads, and restoring revisions against **local-only** D1/R2 at `127.0.0.1:5174`. It uses a synthetic owner and restores portfolio content after successful checks. Run it with Python while a built local Worker is running:
+`tests/admin-integration.py` and `tests/password-sessions.py` test anonymous and non-owner denial, password verification, secure cookies, logout, expiry and rate limits, origin checks, unsafe URLs, optimistic concurrency, draft isolation, live server rendering, uploads, and restoring revisions against **local-only** D1/R2 at `127.0.0.1:5174`. It uses a synthetic owner and restores portfolio content after successful checks. Run it with Python while a built local Worker is running:
 
 ```sh
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --port 5174 --inspector-port 0 --var ADMIN_OWNER_EMAIL:seedy@sites.test
 python tests/admin-integration.py
+python tests/password-sessions.py
 ```
 
-The local test database must be fresh or pinned to `local-owner`. The local proxy can return a restart response when switching identities on consecutive rejected POST requests; the suite separates those contexts with a read request. Runtime tests do not connect to production.
+The tests use only the configured synthetic local credentials and reset their local rate-limit fixtures. The local proxy can return a restart response when switching identities on consecutive rejected POST requests; the suite separates those contexts with a read request. Runtime tests do not connect to production.
 
 ## Source organization
 
 - `src/lib/content.ts`: content schema and initial content assembled from `src/data/`.
 - `src/lib/admin-auth.ts`: server authorization, origin validation and request limits.
+- `src/lib/password-auth.ts`: bcrypt verification, hashed sessions, login throttling and revocation.
 - `src/lib/storage.ts`: prepared D1 queries, drafts, publication and history.
 - `src/app/api/admin/[action]/route.ts`: protected editor API.
 - `src/components/admin-console.tsx`: owner editor.

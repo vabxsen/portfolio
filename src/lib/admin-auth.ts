@@ -1,6 +1,4 @@
-import { env } from 'cloudflare:workers';
-import { getChatGPTUser } from '@/app/chatgpt-auth';
-import { db } from './storage';
+import { currentSession } from './password-auth';
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -10,28 +8,8 @@ export class HttpError extends Error {
   }
 }
 export async function requireOwner() {
-  const user = await getChatGPTUser();
-  if (!user) throw new HttpError(401, 'Sign in with your ChatGPT account to continue.');
-  let owner = await db()
-    .prepare('SELECT user_id FROM admin_owner WHERE id=1')
-    .first<{ user_id: string }>();
-  if (!owner) {
-    // Bootstrap only the explicitly configured owner's verified platform identity.
-    const email = env.ADMIN_OWNER_EMAIL?.trim().toLowerCase();
-    if (!email || user.email.toLowerCase() !== email)
-      throw new HttpError(403, 'This console is restricted to the site owner.');
-    await db()
-      .prepare(
-        'INSERT INTO admin_owner (id,user_id,email) VALUES (1,?,?) ON CONFLICT(id) DO NOTHING',
-      )
-      .bind(user.userId, user.email)
-      .run();
-    owner = await db()
-      .prepare('SELECT user_id FROM admin_owner WHERE id=1')
-      .first<{ user_id: string }>();
-  }
-  if (owner?.user_id !== user.userId)
-    throw new HttpError(403, 'This console is restricted to the site owner.');
+  const user = await currentSession();
+  if (!user) throw new HttpError(401, 'Sign in with your admin email and password to continue.');
   return user;
 }
 export function checkWriteOrigin(request: Request) {
@@ -43,7 +21,7 @@ export function checkWriteOrigin(request: Request) {
   )
     throw new HttpError(403, 'Request origin was not accepted. Refresh this page and try again.');
 }
-export async function limitedJson(request: Request) {
+export async function limitedJson(request: Request, limit = 512000) {
   if (!request.headers.get('content-type')?.startsWith('application/json'))
     throw new HttpError(415, 'JSON required.');
   const reader = request.body?.getReader();
@@ -54,9 +32,9 @@ export async function limitedJson(request: Request) {
     const { done, value } = await reader.read();
     if (done) break;
     length += value.length;
-    if (length > 512000) {
+    if (length > limit) {
       await reader.cancel();
-      throw new HttpError(413, 'Content exceeds 500 KB.');
+      throw new HttpError(413, 'Request body is too large.');
     }
     chunks.push(value);
   }
