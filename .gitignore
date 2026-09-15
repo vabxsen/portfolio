@@ -1,0 +1,9 @@
+work/
+outputs/
+.sites-runtime/
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*
+!.env.example

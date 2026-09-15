@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+dist
+work
+outputs
+pnpm-lock.yaml
+.sites-runtime
