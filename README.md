@@ -32,6 +32,8 @@ The console edits portfolio content and supported design settings. Framework sou
    - `ADMIN_PASSWORD_HASH`
 4. Redeploy after adding the variables.
 
+Keep **Enable access to System Environment Variables** turned on (the default). Storage uses Blob only when `VERCEL_ENV` is `production` or `preview`, and canonical URLs come from `VERCEL_PROJECT_PRODUCTION_URL`.
+
 The public portfolio falls back to the source-controlled default content if storage is temporarily unavailable. The admin console fails closed until all secrets and storage are configured.
 
 ## Development
@@ -45,7 +47,7 @@ pnpm typecheck
 pnpm build
 ```
 
-Local development uses the ignored `.local-data/` directory, even if `BLOB_READ_WRITE_TOKEN` is present (for example after `vercel env pull`), so it never writes to production Blob storage. Before testing the admin console, set `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in `.env.local`, escaping each `$` in the hash as `\$`.
+Only Vercel deployments use Blob storage. Local runs, including `pnpm build && pnpm start` and settings from `vercel env pull`, always use the ignored `.local-data/` directory, even if `BLOB_READ_WRITE_TOKEN` is present, so they never write to production. Before testing the admin console, set `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in `.env.local`, escaping each `$` in the hash as `\$`.
 
 ## Validation
 
