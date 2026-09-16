@@ -17,7 +17,7 @@ import {
 } from 'react';
 
 const MotionEnabled = createContext(true);
-function useMotionPreference() {
+export function useMotionPreference() {
   const reduced = useReducedMotion();
   return !useContext(MotionEnabled) || reduced;
 }
@@ -55,25 +55,15 @@ function ScrollProgress() {
   return <motion.div className="scroll-progress" style={{ scaleX: progress }} aria-hidden="true" />;
 }
 
+// CSS runs the entrance so server and client markup match and it starts before hydration.
 export function AnimatedName({ name }: { name: string }) {
-  const reduced = useMotionPreference();
   return (
     <span className="hero-name">
       <span className="sr-only">{name}</span>
       <span aria-hidden="true">
         {name.split(' ').map((word, index) => (
           <span className="hero-word-mask" key={`${word}-${index}`}>
-            <motion.span
-              initial={false}
-              animate={
-                reduced === false
-                  ? { y: [40, 0], opacity: [0.3, 1], filter: ['blur(5px)', 'blur(0px)'] }
-                  : { y: 0, opacity: 1, filter: 'none' }
-              }
-              transition={{ duration: 0.85, delay: index * 0.12, ease }}
-            >
-              {word}
-            </motion.span>
+            <span style={{ '--i': index } as CSSProperties}>{word}</span>
           </span>
         ))}
       </span>

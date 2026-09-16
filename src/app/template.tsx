@@ -1,14 +1,4 @@
-'use client';
-import { motion, useReducedMotion } from 'framer-motion';
+// A CSS fade keeps server and client markup identical, including with reduced motion.
 export default function Template({ children }: { children: React.ReactNode }) {
-  const reduced = useReducedMotion();
-  return (
-    <motion.div
-      initial={false}
-      animate={reduced ? {} : { opacity: [0.8, 1] }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
-      {children}
-    </motion.div>
-  );
+  return <div className="page-enter">{children}</div>;
 }
