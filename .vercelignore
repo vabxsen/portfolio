@@ -1,6 +1,8 @@
 .dev.vars
 .env*
 .local-data/
+.next/
+.pnpm-store/
 dist/
 node_modules/
 out/
