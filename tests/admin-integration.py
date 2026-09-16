@@ -18,6 +18,7 @@ def call(path,body=None,headers=None,method=None,retry=True):
   result=subprocess.run(args,input=body,capture_output=True)
  if result.returncode:raise RuntimeError(result.stderr.decode())
  head,raw=result.stdout.split(b'\r\n\r\n',1)
+ while head.startswith(b'HTTP/1.1 100'):head,raw=raw.split(b'\r\n\r\n',1)
  status=int(head.split(b' ')[1]);hs={}
  for line in head.decode().split('\r\n')[1:]:
   if ': ' in line:k,v=line.split(': ',1);hs[k.lower()]=v
@@ -49,13 +50,16 @@ status,raw,_=call('/api/admin/save/',{'content':updated,'version':version},heade
 check('draft saves persistently',status==200);newversion=json.loads(raw)['version']
 check('concurrent stale save rejected',call('/api/admin/save/',{'content':original,'version':version},headers=OWNER)[0]==409)
 status,html,_=call('/')
-Path('work/admin-public-before.html').write_bytes(html)
+Path('work').mkdir(exist_ok=True);Path('work/admin-public-before.html').write_bytes(html)
 check('public HTML renders original content before publish',status==200 and b'Vaibhav Sen' in html and b'Local draft verification' not in html)
 check('owner preview renders saved draft',b'Local draft verification' in call('/admin/preview/',headers=OWNER)[1])
 check('anonymous preview has no draft content',b'Local draft verification' not in call('/admin/preview/')[1])
 check('publish succeeds',call('/api/admin/publish/',{'version':newversion},headers=OWNER)[0]==200)
+check('published content is stored in its own record',json.loads(Path('.local-data/data/published.json').read_text())['version']==newversion)
+check('publishing the live version again is a safe retry',call('/api/admin/publish/',{'version':newversion},headers=OWNER)[0]==200)
 check('public server rendering updates after publish',b'Local draft verification' in call('/')[1])
 check('non-image upload rejected',call('/api/admin/upload/',b'<script>alert(1)</script>',headers=OWNER)[0]==400)
+check('image over 4 MB rejected',call('/api/admin/upload/',b'\x89PNG\r\n\x1a\n'+bytes(4*1024*1024-7),headers=OWNER)[0]==413)
 status,raw,_=call('/api/admin/upload/',Path('public/projects/budgie-home.jpg').read_bytes(),headers={**OWNER,'X-File-Name':'budgie-test.jpg'})
 check('owner image upload succeeds',status==200);upload=json.loads(raw)
 check('uploaded image persists and is served',call(upload['url'])[1]==Path('public/projects/budgie-home.jpg').read_bytes())

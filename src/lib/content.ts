@@ -40,7 +40,6 @@ export const contentSchema = z
       email: z.string().email(),
       github: url.nullable(),
       linkedin: url.nullable(),
-      siteUrl: url,
     }),
     projects: z
       .array(

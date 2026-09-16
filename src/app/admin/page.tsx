@@ -1,5 +1,6 @@
 import { requireOwner, HttpError } from '@/lib/admin-auth';
 import { ensureState } from '@/lib/storage';
+import { contentSchema } from '@/lib/content';
 import { AdminConsole } from '@/components/admin-console';
 import { AdminLogin } from '@/components/admin-login';
 import { redirect } from 'next/navigation';
@@ -24,9 +25,12 @@ export default async function Admin({
   try {
     const user = await requireOwner();
     const state = await ensureState();
+    const draft = JSON.parse(state.draft);
+    // Parsing drops fields older drafts may still carry, such as the removed profile.siteUrl.
+    const parsed = contentSchema.safeParse(draft);
     return (
       <AdminConsole
-        initialContent={JSON.parse(state.draft)}
+        initialContent={parsed.success ? parsed.data : draft}
         initialVersion={state.version}
         initialPublishedVersion={state.published_version}
         email={user.email}

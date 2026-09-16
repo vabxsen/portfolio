@@ -8,6 +8,8 @@ import {
 import { defaultContent, contentSchema, type Content } from './content';
 
 const STATE_KEY = 'data/site-state.json';
+// The public site reads only this small record; the full state also holds drafts and history.
+const PUBLISHED_KEY = 'data/published.json';
 const MAX_REVISIONS = 50;
 
 export type State = {
@@ -34,6 +36,7 @@ export type MediaRecord = {
 };
 
 type StoredState = State & { revisions: Revision[]; media: MediaRecord[] };
+type PublishedRecord = { version: number; payload: string };
 type RecordValue<T> = { value: T; etag?: string };
 
 function initialState(): StoredState {
@@ -50,12 +53,19 @@ function initialState(): StoredState {
   };
 }
 
+// Local runs use .local-data/ even when a Blob token is present (for example after
+// `vercel env pull`), so development servers and tests never write to production storage.
+function localRun() {
+  return process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV === 'development';
+}
+
 function blobEnabled() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return !localRun() && Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
 function assertStorageConfigured() {
-  if (process.env.VERCEL && !blobEnabled()) throw new Error('Portfolio storage is not configured');
+  if (process.env.VERCEL && !localRun() && !blobEnabled())
+    throw new Error('Portfolio storage is not configured');
 }
 
 async function localPath(key: string) {
@@ -161,10 +171,24 @@ export async function ensureState(): Promise<StoredState> {
   return result.value!;
 }
 
+async function storePublished(state: StoredState, replace: boolean) {
+  const record: PublishedRecord = { version: state.published_version, payload: state.published };
+  await mutateRecord<PublishedRecord>(PUBLISHED_KEY, (current) =>
+    current && !replace ? null : record,
+  );
+}
+
 export async function getPublished(): Promise<Content> {
   try {
+    const published = await readRecord<PublishedRecord>(PUBLISHED_KEY);
+    if (published) return contentSchema.parse(JSON.parse(published.value.payload));
     const state = await readState();
-    return state ? contentSchema.parse(JSON.parse(state.published)) : defaultContent;
+    if (!state) return defaultContent;
+    // Stores from before the published record existed: add it once, never replacing a newer publish.
+    await storePublished(state, false).catch((error) =>
+      console.error('Unable to store the published portfolio record', error),
+    );
+    return contentSchema.parse(JSON.parse(state.published));
   } catch (error) {
     console.error('Published portfolio storage unavailable', error);
     return defaultContent;
@@ -204,7 +228,11 @@ export async function publish(version: number, author: string) {
       revisions: [revision, ...state.revisions].slice(0, MAX_REVISIONS),
     };
   });
-  return result.changed;
+  const state = result.value;
+  // Also runs when this version was already published, so retrying repairs a failed record write.
+  if (!state || state.published_version !== version) return false;
+  await storePublished(state, true);
+  return true;
 }
 
 export async function listRevisions() {

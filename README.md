@@ -16,7 +16,7 @@ To change the password, generate a fresh bcrypt cost-12 hash in a trusted enviro
 - Projects: add, edit, remove, reorder, choose featured work, upload screenshots, and edit links and technologies.
 - Page copy, tech stack, journey, and open source: edit centralized content through structured fields.
 - Appearance: accent, background and text colors, motion, and section visibility.
-- Media library: upload PNG, JPEG, and WebP images up to 8 MB, then select them in projects.
+- Media library: upload PNG, JPEG, and WebP images up to 4 MB (Vercel's request size limit), then select them in projects.
 - Save draft keeps changes private. Preview opens the saved draft. Publish updates the server-rendered portfolio immediately without a source rebuild.
 - History restores a published version into a draft. Publishing that draft restores the live content.
 - Export/import backs up content and appearance as validated JSON. Image references remain linked to the persistent media library.
@@ -45,7 +45,7 @@ pnpm typecheck
 pnpm build
 ```
 
-Local development uses the ignored `.local-data/` directory instead of connecting to production Blob storage. Configure `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in your local environment before testing the admin console.
+Local development uses the ignored `.local-data/` directory, even if `BLOB_READ_WRITE_TOKEN` is present (for example after `vercel env pull`), so it never writes to production Blob storage. Before testing the admin console, set `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in `.env.local`, escaping each `$` in the hash as `\$`.
 
 ## Validation
 

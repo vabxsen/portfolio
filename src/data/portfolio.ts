@@ -26,7 +26,6 @@ export const profile = {
   email: 'cheeseburst06@gmail.com',
   github: 'https://github.com/vabxsen',
   linkedin: null as string | null,
-  siteUrl: 'https://vaibhav-sen-portfolio.vabxsen.chatgpt.site',
 };
 
 export const navigation = [
