@@ -1,13 +1,15 @@
-import { env } from 'cloudflare:workers';
+import {
+  BlobPreconditionFailedError,
+  del,
+  get,
+  put,
+  type GetBlobResult,
+} from '@vercel/blob';
 import { defaultContent, contentSchema, type Content } from './content';
-export function db() {
-  if (!env.DB) throw new Error('Database unavailable');
-  return env.DB;
-}
-export function bucket() {
-  if (!env.BUCKET) throw new Error('Media storage unavailable');
-  return env.BUCKET;
-}
+
+const STATE_KEY = 'data/site-state.json';
+const MAX_REVISIONS = 50;
+
 export type State = {
   draft: string;
   published: string;
@@ -15,56 +17,302 @@ export type State = {
   published_version: number;
   updated_at: string;
 };
-export async function readState() {
-  return db()
-    .prepare(
-      'SELECT draft,published,version,published_version,updated_at FROM site_content WHERE id=1',
-    )
-    .first<State>();
+
+export type Revision = {
+  id: string;
+  payload: string;
+  created_at: string;
+  author: string;
+};
+
+export type MediaRecord = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  created_at: string;
+};
+
+type StoredState = State & { revisions: Revision[]; media: MediaRecord[] };
+type RecordValue<T> = { value: T; etag?: string };
+
+function initialState(): StoredState {
+  const now = new Date().toISOString();
+  const payload = JSON.stringify(defaultContent);
+  return {
+    draft: payload,
+    published: payload,
+    version: 1,
+    published_version: 1,
+    updated_at: now,
+    revisions: [{ id: crypto.randomUUID(), payload, created_at: now, author: 'Initial portfolio' }],
+    media: [],
+  };
 }
-export async function ensureState() {
-  const initial = JSON.stringify(defaultContent);
-  await db()
-    .prepare(
-      'INSERT INTO site_content (id,draft,published,version,published_version,updated_at) VALUES (1,?,?,1,1,?) ON CONFLICT(id) DO NOTHING',
-    )
-    .bind(initial, initial, new Date().toISOString())
-    .run();
-  await db()
-    .prepare(
-      'INSERT INTO site_revisions (id,payload,created_at,author) SELECT ?,published,?,? FROM site_content WHERE id=1 AND NOT EXISTS (SELECT 1 FROM site_revisions)',
-    )
-    .bind(crypto.randomUUID(), new Date().toISOString(), 'Initial portfolio')
-    .run();
-  return (await readState())!;
+
+function blobEnabled() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
+
+function assertStorageConfigured() {
+  if (process.env.VERCEL && !blobEnabled()) throw new Error('Portfolio storage is not configured');
+}
+
+async function localPath(key: string) {
+  const path = await import('node:path');
+  return path.join(process.cwd(), '.local-data', ...key.split('/'));
+}
+
+async function readLocal<T>(key: string): Promise<RecordValue<T> | null> {
+  const fs = await import('node:fs/promises');
+  try {
+    const path = await localPath(key);
+    const [value, stat] = await Promise.all([fs.readFile(path, 'utf8'), fs.stat(path)]);
+    return { value: JSON.parse(value) as T, etag: `${stat.mtimeMs}-${stat.size}` };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+async function writeLocal<T>(key: string, value: T) {
+  const fs = await import('node:fs/promises');
+  const pathModule = await import('node:path');
+  const path = await localPath(key);
+  await fs.mkdir(pathModule.dirname(path), { recursive: true });
+  const temporary = `${path}.${crypto.randomUUID()}.tmp`;
+  await fs.writeFile(temporary, JSON.stringify(value), 'utf8');
+  await fs.rename(temporary, path);
+}
+
+async function deleteLocal(key: string) {
+  const fs = await import('node:fs/promises');
+  await fs.rm(await localPath(key), { force: true });
+}
+
+async function readRecord<T>(key: string): Promise<RecordValue<T> | null> {
+  assertStorageConfigured();
+  if (!blobEnabled()) return readLocal<T>(key);
+  const result = await get(key, { access: 'private', useCache: false });
+  if (!result || result.statusCode !== 200) return null;
+  return {
+    value: JSON.parse(await new Response(result.stream).text()) as T,
+    etag: result.blob.etag,
+  };
+}
+
+async function writeRecord<T>(key: string, value: T, etag?: string) {
+  assertStorageConfigured();
+  if (!blobEnabled()) return writeLocal(key, value);
+  await put(key, JSON.stringify(value), {
+    access: 'private',
+    addRandomSuffix: false,
+    allowOverwrite: Boolean(etag),
+    contentType: 'application/json',
+    ...(etag ? { ifMatch: etag } : {}),
+  });
+}
+
+let localMutationQueue = Promise.resolve();
+
+async function mutateRecord<T>(key: string, update: (current: T | null) => T | null) {
+  if (!blobEnabled()) {
+    assertStorageConfigured();
+    const previous = localMutationQueue;
+    let release = () => {};
+    localMutationQueue = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await previous;
+    try {
+      const current = await readLocal<T>(key);
+      const next = update(current?.value ?? null);
+      if (next === null) return { changed: false, value: current?.value ?? null };
+      await writeLocal(key, next);
+      return { changed: true, value: next };
+    } finally {
+      release();
+    }
+  }
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const current = await readRecord<T>(key);
+    const next = update(current?.value ?? null);
+    if (next === null) return { changed: false, value: current?.value ?? null };
+    try {
+      await writeRecord(key, next, current?.etag);
+      return { changed: true, value: next };
+    } catch (error) {
+      const creationRace = !current && attempt === 0;
+      if (!(error instanceof BlobPreconditionFailedError) && !creationRace) throw error;
+    }
+  }
+  throw new Error('Storage changed too frequently; please try again');
+}
+
+export async function readState(): Promise<StoredState | null> {
+  return (await readRecord<StoredState>(STATE_KEY))?.value ?? null;
+}
+
+export async function ensureState(): Promise<StoredState> {
+  const existing = await readState();
+  if (existing) return existing;
+  const result = await mutateRecord<StoredState>(STATE_KEY, (current) => current ?? initialState());
+  return result.value!;
+}
+
 export async function getPublished(): Promise<Content> {
-  const state = await readState();
-  return state ? contentSchema.parse(JSON.parse(state.published)) : defaultContent;
+  try {
+    const state = await readState();
+    return state ? contentSchema.parse(JSON.parse(state.published)) : defaultContent;
+  } catch (error) {
+    console.error('Published portfolio storage unavailable', error);
+    return defaultContent;
+  }
 }
+
 export async function saveDraft(content: Content, version: number) {
-  const result = await db()
-    .prepare(
-      'UPDATE site_content SET draft=?,version=version+1,updated_at=? WHERE id=1 AND version=?',
-    )
-    .bind(JSON.stringify(content), new Date().toISOString(), version)
-    .run();
-  return result.meta.changes === 1;
+  const serialized = JSON.stringify(content);
+  const result = await mutateRecord<StoredState>(STATE_KEY, (current) => {
+    const state = current ?? initialState();
+    if (state.version !== version) return null;
+    return {
+      ...state,
+      draft: serialized,
+      version: state.version + 1,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  return result.changed;
 }
+
 export async function publish(version: number, author: string) {
-  const id = crypto.randomUUID(),
-    now = new Date().toISOString();
-  const result = await db().batch([
-    db()
-      .prepare(
-        'UPDATE site_content SET published=draft,published_version=version,publication_id=?,updated_at=? WHERE id=1 AND version=? AND published_version<>version',
-      )
-      .bind(id, now, version),
-    db()
-      .prepare(
-        'INSERT INTO site_revisions (id,payload,created_at,author) SELECT ?,published,?,? FROM site_content WHERE id=1 AND publication_id=?',
-      )
-      .bind(id, now, author, id),
-  ]);
-  return result[0].meta.changes === 1;
+  const result = await mutateRecord<StoredState>(STATE_KEY, (current) => {
+    const state = current ?? initialState();
+    if (state.version !== version || state.published_version === version) return null;
+    const revision: Revision = {
+      id: crypto.randomUUID(),
+      payload: state.draft,
+      created_at: new Date().toISOString(),
+      author,
+    };
+    return {
+      ...state,
+      published: state.draft,
+      published_version: version,
+      updated_at: revision.created_at,
+      revisions: [revision, ...state.revisions].slice(0, MAX_REVISIONS),
+    };
+  });
+  return result.changed;
+}
+
+export async function listRevisions() {
+  return (await ensureState()).revisions
+    .map(({ id, created_at, author }) => ({ id, created_at, author }))
+    .slice(0, MAX_REVISIONS);
+}
+
+export async function getRevision(id: string) {
+  return (await ensureState()).revisions.find((revision) => revision.id === id) ?? null;
+}
+
+export async function listMedia() {
+  return (await ensureState()).media.slice(0, 100);
+}
+
+export async function addMedia(record: MediaRecord) {
+  await mutateRecord<StoredState>(STATE_KEY, (current) => {
+    const state = current ?? initialState();
+    return { ...state, media: [record, ...state.media].slice(0, 100) };
+  });
+}
+
+export async function storeMediaFile(id: string, bytes: Uint8Array, type: string) {
+  assertStorageConfigured();
+  const key = `media/${id}`;
+  if (!blobEnabled()) {
+    const fs = await import('node:fs/promises');
+    const pathModule = await import('node:path');
+    const path = await localPath(key);
+    await fs.mkdir(pathModule.dirname(path), { recursive: true });
+    await fs.writeFile(path, bytes);
+    return;
+  }
+  await put(key, Buffer.from(bytes), {
+    access: 'private',
+    addRandomSuffix: false,
+    allowOverwrite: false,
+    contentType: type,
+  });
+}
+
+export async function removeMediaFile(id: string) {
+  assertStorageConfigured();
+  const key = `media/${id}`;
+  if (!blobEnabled()) return deleteLocal(key);
+  await del(key);
+}
+
+export type MediaFile =
+  | { statusCode: 200; stream: ReadableStream<Uint8Array>; type: string; etag: string }
+  | { statusCode: 304; stream: null; type: null; etag: string };
+
+export async function getMediaFile(id: string, ifNoneMatch?: string | null): Promise<MediaFile | null> {
+  assertStorageConfigured();
+  const key = `media/${id}`;
+  if (!blobEnabled()) {
+    const fs = await import('node:fs/promises');
+    try {
+      const bytes = await fs.readFile(await localPath(key));
+      const type = id.endsWith('.png')
+        ? 'image/png'
+        : id.endsWith('.webp')
+          ? 'image/webp'
+          : 'image/jpeg';
+      return {
+        statusCode: 200,
+        stream: new Blob([bytes], { type }).stream(),
+        type,
+        etag: `\"${bytes.byteLength}-${id}\"`,
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+  const result: GetBlobResult | null = await get(key, {
+    access: 'private',
+    ...(ifNoneMatch ? { ifNoneMatch } : {}),
+  });
+  if (!result) return null;
+  if (result.statusCode === 304)
+    return { statusCode: 304, stream: null, type: null, etag: result.blob.etag };
+  return {
+    statusCode: 200,
+    stream: result.stream,
+    type: result.blob.contentType,
+    etag: result.blob.etag,
+  };
+}
+
+export async function readSecureRecord<T>(key: string) {
+  return (await readRecord<T>(`auth/${key}.json`))?.value ?? null;
+}
+
+export async function writeSecureRecord<T>(key: string, value: T) {
+  const storageKey = `auth/${key}.json`;
+  const current = await readRecord<T>(storageKey);
+  await writeRecord(storageKey, value, current?.etag);
+}
+
+export async function deleteSecureRecord(key: string) {
+  const storageKey = `auth/${key}.json`;
+  assertStorageConfigured();
+  if (!blobEnabled()) return deleteLocal(storageKey);
+  await del(storageKey);
+}
+
+export async function mutateSecureRecord<T>(key: string, update: (current: T | null) => T) {
+  return (await mutateRecord<T>(`auth/${key}.json`, update)).value!;
 }

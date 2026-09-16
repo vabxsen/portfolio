@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { profile } from '@/data/portfolio';
+import { siteUrl } from '@/lib/site-url';
 export const dynamic = 'force-static';
 export default function sitemap(): MetadataRoute.Sitemap {
-  return profile.siteUrl ? [{ url: profile.siteUrl, changeFrequency: 'monthly', priority: 1 }] : [];
+  return [{ url: siteUrl(), changeFrequency: 'monthly', priority: 1 }];
 }

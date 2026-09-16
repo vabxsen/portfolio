@@ -2,7 +2,7 @@ import re
 import subprocess
 import urllib.parse
 
-BASE = 'http://127.0.0.1:5174'
+BASE = 'http://localhost:5174'
 
 
 def call(path, body=None, headers=None):

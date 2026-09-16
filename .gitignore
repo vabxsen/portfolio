@@ -2,6 +2,9 @@ work/
 outputs/
 .sites-runtime/
 node_modules/
+.pnpm-store/
+.local-data/
+.vercel/
 .next/
 .vinext/
 out/

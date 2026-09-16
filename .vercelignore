@@ -1,0 +1,9 @@
+.dev.vars
+.env*
+.local-data/
+dist/
+node_modules/
+out/
+outputs/
+tests/
+work/

@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { contentSchema } from '@/lib/content';
-import { db, bucket, ensureState, saveDraft, publish } from '@/lib/storage';
+import {
+  addMedia,
+  ensureState,
+  getRevision,
+  listMedia,
+  listRevisions,
+  publish,
+  removeMediaFile,
+  saveDraft,
+  storeMediaFile,
+} from '@/lib/storage';
 import { requireOwner, checkWriteOrigin, limitedJson, HttpError } from '@/lib/admin-auth';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -34,21 +44,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ acti
         updatedAt: s.updated_at,
       });
     }
-    if (action === 'history')
-      return json(
-        (
-          await db()
-            .prepare(
-              'SELECT id,created_at,author FROM site_revisions ORDER BY created_at DESC LIMIT 50',
-            )
-            .all()
-        ).results,
-      );
-    if (action === 'media')
-      return json(
-        (await db().prepare('SELECT * FROM site_media ORDER BY created_at DESC LIMIT 100').all())
-          .results,
-      );
+    if (action === 'history') return json(await listRevisions());
+    if (action === 'media') return json(await listMedia());
     if (action === 'export') {
       const s = await ensureState();
       return new Response(s.draft, {
@@ -108,14 +105,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
       } else throw new HttpError(400, 'Use a PNG, JPEG, or WebP image.');
       const id = `${crypto.randomUUID()}.${ext}`,
         name = decodeURIComponent(request.headers.get('x-file-name') || 'Image').slice(0, 150);
-      await bucket().put(id, bytes, { httpMetadata: { contentType: type } });
+      await storeMediaFile(id, bytes, type);
       try {
-        await db()
-          .prepare('INSERT INTO site_media (id,name,type,size,created_at) VALUES (?,?,?,?,?)')
-          .bind(id, name, type, size, new Date().toISOString())
-          .run();
+        await addMedia({ id, name, type, size, created_at: new Date().toISOString() });
       } catch (e) {
-        await bucket().delete(id);
+        await removeMediaFile(id);
         throw e;
       }
       return json({ url: `/media/${id}`, id, name });
@@ -142,10 +136,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
     }
     if (action === 'restore') {
       const id = z.string().uuid().parse(body.id);
-      const revision = await db()
-        .prepare('SELECT payload FROM site_revisions WHERE id=?')
-        .bind(id)
-        .first<{ payload: string }>();
+      const revision = await getRevision(id);
       if (!revision) throw new HttpError(404, 'Revision not found.');
       if (!(await saveDraft(contentSchema.parse(JSON.parse(revision.payload)), version)))
         throw new HttpError(409, 'The draft changed in another tab. Reload it before restoring.');

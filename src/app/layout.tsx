@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { profile } from '@/data/portfolio';
+import { siteUrl } from '@/lib/site-url';
 import localFont from 'next/font/local';
 const manrope = localFont({
   src: '../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2',
@@ -12,9 +13,8 @@ import './admin.css';
 export const metadata: Metadata = {
   title: { default: 'Vaibhav Sen — Developer & UI/UX Designer', template: '%s — Vaibhav Sen' },
   description: profile.introduction,
-  ...(profile.siteUrl
-    ? { metadataBase: new URL(profile.siteUrl), alternates: { canonical: '/' } }
-    : {}),
+  metadataBase: new URL(siteUrl()),
+  alternates: { canonical: '/' },
   icons: { icon: '/icon.svg' },
   openGraph: {
     title: 'Vaibhav Sen — Developer & UI/UX Designer',

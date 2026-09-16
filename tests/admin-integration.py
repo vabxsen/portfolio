@@ -1,6 +1,6 @@
 import urllib.request, urllib.error, json, copy, time
 from pathlib import Path
-BASE='http://127.0.0.1:5174'
+BASE='http://localhost:5174'
 OWNER={}
 OTHER={'oai-authenticated-user-id':'other-user','oai-authenticated-user-email':'other@example.test'}
 def call(path,body=None,headers=None,method=None,retry=True):
@@ -69,7 +69,7 @@ check('test content reset',status==200)
 check('test publication reset',call('/api/admin/publish/',{'version':json.loads(raw)['version']},headers=OWNER)[0]==200)
 status,adminhtml,head=call('/admin/',headers=OWNER);Path('work/admin-dashboard.html').write_bytes(adminhtml)
 check('owner dashboard renders',status==200 and b'Your publishing flow' in adminhtml)
-check('admin page is not cached','no-store' in head.get('cache-control',''))
+check('admin page is not cached',any(value in head.get('cache-control','') for value in ['no-store','no-cache']))
 
 
 

@@ -1,6 +1,6 @@
 import urllib.request, urllib.error, json, copy, time
 from pathlib import Path
-BASE='http://127.0.0.1:5174'
+BASE='http://localhost:5174'
 OWNER={}
 OTHER={'oai-authenticated-user-id':'other-user','oai-authenticated-user-email':'other@example.test'}
 def call(path,body=None,headers=None,method=None,retry=True):
@@ -35,15 +35,13 @@ call('/')
 status,_,login_headers=call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'})
 check('fresh login succeeds',status==200)
 expired_cookie=login_headers['set-cookie'].split(';')[0]
-import sqlite3,hashlib
+import hashlib
 session_hash=hashlib.sha256(expired_cookie.split('=',1)[1].encode()).hexdigest()
-changed=False
-for file in Path('.wrangler/state/v3/d1').rglob('*.sqlite'):
- connection=sqlite3.connect(file)
- if connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_sessions'").fetchone():
-  rows=connection.execute('UPDATE admin_sessions SET expires_at=0 WHERE token_hash=?',(session_hash,)).rowcount
-  connection.commit();changed=changed or rows==1
- connection.close()
+session_file=Path('.local-data/auth/sessions/'+session_hash+'.json')
+session=json.loads(session_file.read_text())
+session['expires_at']=0
+session_file.write_text(json.dumps(session))
+changed=session_file.exists()
 check('local session expiry fixture applied',changed)
 check('expired session rejected',call('/api/admin/content/',headers={'Cookie':expired_cookie})[0]==401)
 for i in range(5):
@@ -51,10 +49,7 @@ for i in range(5):
  check('incorrect attempt rejected '+str(i+1),call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'})[0]==401)
 call('/')
 check('sixth attempt is rate-limited',call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'})[0]==429)
-for file in Path('.wrangler/state/v3/d1').rglob('*.sqlite'):
- connection=sqlite3.connect(file)
- if connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_login_limits'").fetchone():connection.execute('DELETE FROM admin_login_limits');connection.commit()
- connection.close()
+Path('.local-data/auth/login-limits.json').unlink(missing_ok=True)
 call('/')
 check('cross-origin login rejected',call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'},headers={'Origin':'https://attacker.example'})[0]==403)
-print('Password session lifecycle and rate-limit checks passed against local D1/R2.')
+print('Password session lifecycle and rate-limit checks passed against local storage.')
