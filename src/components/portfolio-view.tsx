@@ -20,6 +20,7 @@ import {
   ScrollEffects,
   SmoothScroll,
   SpotlightTracker,
+  TiltStages,
 } from '@/components/motion-graphics';
 import { ProjectGallery } from '@/components/project-gallery';
 import { projectPlatforms } from '@/components/project-platforms';
@@ -75,6 +76,7 @@ export function PortfolioView({ content }: { content: Content }) {
         <CustomCursor />
         <DecodeLabels />
         <SmoothScroll />
+        <TiltStages />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

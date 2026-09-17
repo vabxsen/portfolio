@@ -11,6 +11,7 @@ export function ProjectChapter({ project, index }: { project: Project; index: nu
     <div className="project-visual">
       <span className="stage-label">{screenshots ? 'Product screenshots' : 'Interface study'}</span>
       <ProjectPreview project={project} />
+      <span className="stage-glare" aria-hidden="true" />
     </div>
   );
   return (
