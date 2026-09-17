@@ -171,8 +171,6 @@ export function PortfolioView({ content }: { content: Content }) {
                   <a
                     className="text-link scroll-fade"
                     href={sections.contact ? '#contact' : emailUrl}
-                    target={sections.contact ? undefined : '_blank'}
-                    rel={sections.contact ? undefined : 'noopener noreferrer'}
                   >
                     {copy.about.link} <ArrowUpRight size={16} />
                   </a>
@@ -323,8 +321,6 @@ export function PortfolioView({ content }: { content: Content }) {
                     className="contact-orb"
                     href={emailUrl}
                     ariaLabel={`Email ${profile.name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     <ArrowUpRight strokeWidth={1} size={60} />
                   </MagneticLink>
@@ -332,12 +328,7 @@ export function PortfolioView({ content }: { content: Content }) {
               </div>
               <div className="contact-bottom scroll-fade">
                 <p>{copy.contact.description}</p>
-                <a
-                  className="email-link"
-                  href={emailUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a className="email-link" href={emailUrl}>
                   <Mail size={17} />
                   {profile.email}
                   <ArrowUpRight size={16} />

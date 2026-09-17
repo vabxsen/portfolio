@@ -76,15 +76,11 @@ export function MagneticLink({
   href,
   className,
   ariaLabel,
-  target,
-  rel,
 }: {
   children: ReactNode;
   href: string;
   className: string;
   ariaLabel?: string;
-  target?: '_blank' | '_self';
-  rel?: string;
 }) {
   const reduced = useMotionPreference();
   const x = useMotionValue(0);
@@ -109,8 +105,6 @@ export function MagneticLink({
       href={href}
       className={className}
       aria-label={ariaLabel}
-      target={target}
-      rel={rel}
       style={{ x: reduced ? 0 : smoothX, y: reduced ? 0 : smoothY }}
       onPointerMove={move}
       onPointerLeave={reset}
