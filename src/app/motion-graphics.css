@@ -881,6 +881,15 @@
 .hero-letter {
   font-weight: inherit;
 }
+/* Once the entrance is over, the name can magnify: letters scale from near their baseline,
+   and the word masks stop clipping so grown letters are not cut off. */
+.hero-name[data-live] .hero-word-mask {
+  overflow: visible;
+}
+.hero-name[data-live] .hero-letter {
+  display: inline-block;
+  transform-origin: 50% 80%;
+}
 
 @media (max-width: 700px) {
   .curtain-cover > .ambient {
