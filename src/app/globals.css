@@ -175,7 +175,7 @@
   --font-sans: var(--font-manrope), Arial, Helvetica, sans-serif;
 }
 :root {
-  --bg: #101010;
+  --bg: #0b0b0b;
   --panel: #161616;
   --fg: #eeeae3;
   --muted: #9a9995;
@@ -1310,7 +1310,7 @@ h2 span {
   position: absolute;
   left: -4px;
   top: 5px;
-  background: #101010;
+  background: var(--bg);
   border-radius: 50%;
 }
 .timeline li:first-child .timeline-dot {
