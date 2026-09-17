@@ -15,8 +15,10 @@ import { Navbar } from '@/components/navbar';
 import { AnimatedName, MagneticLink, MotionProvider, Reveal } from '@/components/motion';
 import {
   CustomCursor,
+  DecodeLabels,
   HeroOrbit,
   ScrollEffects,
+  SmoothScroll,
   SpotlightTracker,
 } from '@/components/motion-graphics';
 import { ProjectGallery } from '@/components/project-gallery';
@@ -71,6 +73,8 @@ export function PortfolioView({ content }: { content: Content }) {
       <MotionProvider enabled={theme.motion}>
         <SpotlightTracker />
         <CustomCursor />
+        <DecodeLabels />
+        <SmoothScroll />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

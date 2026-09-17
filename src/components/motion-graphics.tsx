@@ -346,6 +346,7 @@ export function ScrollEffects() {
     const curtain = layer?.closest<HTMLElement>('.curtain');
     if (!layer || !curtain) return;
     const chapters = [...curtain.querySelectorAll<HTMLElement>('.chapter')];
+    const counter = curtain.querySelector<HTMLElement>('.chapter-counter');
     const cover = curtain.querySelector<HTMLElement>('.curtain-cover');
     const stage = curtain.querySelector<HTMLElement>('.curtain-stage');
     let frame = 0;
@@ -360,18 +361,31 @@ export function ScrollEffects() {
     const update = () => {
       frame = 0;
       const middle = window.innerHeight / 2;
-      if (!reduced) {
-        let accent = '';
-        let strength = 0;
-        for (const chapter of chapters) {
-          const box = chapter.getBoundingClientRect();
-          const distance = Math.abs(box.top + box.height / 2 - middle);
-          const score = 1 - Math.min(distance / (box.height / 2 + middle * 0.6), 1);
-          if (score > strength) {
-            strength = score;
-            accent = chapter.style.getPropertyValue('--project-accent');
-          }
+      let accent = '';
+      let strength = 0;
+      let nearest = 0;
+      let nearestDistance = Infinity;
+      chapters.forEach((chapter, index) => {
+        const box = chapter.getBoundingClientRect();
+        const distance = Math.abs(box.top + box.height / 2 - middle);
+        const score = 1 - Math.min(distance / (box.height / 2 + middle * 0.6), 1);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = index;
         }
+        if (score > strength) {
+          strength = score;
+          accent = chapter.style.getPropertyValue('--project-accent');
+        }
+      });
+      if (counter && chapters.length) {
+        counter.style.setProperty('--current', String(nearest));
+        counter.style.setProperty(
+          '--counter-accent',
+          chapters[nearest].style.getPropertyValue('--project-accent'),
+        );
+      }
+      if (!reduced) {
         if (accent) layer.style.setProperty('--tint', accent);
         layer.style.opacity = Math.min(1, strength * 1.5).toFixed(3);
       }
@@ -415,4 +429,164 @@ export function ScrollEffects() {
   }, [reduced]);
 
   return <div ref={tint} className="page-tint" aria-hidden="true" />;
+}
+
+const decodeTargets =
+  '.section-label, .work-caption > span, .chapter-rule > span, .index-header > span, .stage-label, .timeline-period';
+const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const symbols = '#%&*+=/<>';
+const pick = (set: string) => set[Math.floor(Math.random() * set.length)];
+
+function scramble(char: string) {
+  if (/\d/.test(char)) return pick('0123456789');
+  if (!/[a-z]/i.test(char)) return char;
+  if (Math.random() < 0.2) return pick(symbols);
+  const letter = pick(letters);
+  return char === char.toLowerCase() ? letter.toLowerCase() : letter;
+}
+
+// Small labels cycle through random characters the first time they scroll into view, then
+// settle left to right into their real text. The text nodes are restored exactly afterwards.
+export function DecodeLabels() {
+  const reduced = useMotionPreference();
+
+  useEffect(() => {
+    if (reduced) return;
+    const running = new Set<() => void>();
+
+    const decode = (element: Element) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      const parts: { node: Text; text: string; offset: number }[] = [];
+      let length = 0;
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.nodeValue ?? '';
+        if (!text.trim()) continue;
+        parts.push({ node: node as Text, text, offset: length });
+        length += text.length;
+      }
+      if (!length) return;
+      const step = Math.min(34, 760 / length);
+      let frame = 0;
+      let start = 0;
+      let rolled = 0;
+      const finish = () => {
+        cancelAnimationFrame(frame);
+        for (const { node, text } of parts) node.nodeValue = text;
+        running.delete(finish);
+      };
+      const tick = (now: number) => {
+        start ||= now;
+        frame = requestAnimationFrame(tick);
+        // Roll new characters about twenty times a second rather than every frame.
+        if (now - rolled < 50) return;
+        rolled = now;
+        const elapsed = now - start;
+        let settled = true;
+        for (const { node, text, offset } of parts) {
+          let next = '';
+          for (let index = 0; index < text.length; index++) {
+            const done = elapsed >= 140 + (offset + index) * step;
+            if (!done && /\w/.test(text[index])) settled = false;
+            next += done ? text[index] : scramble(text[index]);
+          }
+          node.nodeValue = next;
+        }
+        if (settled) finish();
+      };
+      running.add(finish);
+      frame = requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          observer.unobserve(entry.target);
+          decode(entry.target);
+        }
+      },
+      { rootMargin: '0px 0px -12% 0px' },
+    );
+    document.querySelectorAll(decodeTargets).forEach((target) => observer.observe(target));
+    return () => {
+      observer.disconnect();
+      running.forEach((finish) => finish());
+    };
+  }, [reduced]);
+
+  return null;
+}
+
+// Whether a wheel over `start` should scroll an inner scrollable element instead of the page.
+function innerScroller(start: EventTarget | null, delta: number) {
+  for (
+    let node = start instanceof Element ? start : null;
+    node && node !== document.body && node !== document.documentElement;
+    node = node.parentElement
+  ) {
+    if (node.scrollHeight <= node.clientHeight) continue;
+    if (!/auto|scroll|overlay/.test(getComputedStyle(node).overflowY)) continue;
+    const room =
+      delta < 0 ? node.scrollTop : node.scrollHeight - node.clientHeight - node.scrollTop;
+    if (room > 1) return true;
+  }
+  return false;
+}
+
+const glide = 120; // Time constant in milliseconds for easing toward the wheel's target.
+
+// Mouse wheel scrolling glides toward its target instead of jumping in steps. The page itself
+// still scrolls, so sticky elements and scroll-driven animations behave as usual. Keyboard,
+// links, and the scrollbar keep their native behavior and take over from a glide in progress.
+export function SmoothScroll() {
+  const reduced = useMotionPreference();
+
+  useEffect(() => {
+    if (reduced) return;
+    let target = 0;
+    let current = 0;
+    let written = 0;
+    let last = 0;
+    let frame = 0;
+
+    const tick = (now: number) => {
+      if (Math.abs(window.scrollY - written) > 3) {
+        frame = 0;
+        return;
+      }
+      const elapsed = Math.min(now - last, 64);
+      last = now;
+      current += (target - current) * (1 - Math.exp(-elapsed / glide));
+      if (Math.abs(target - current) < 0.5) current = target;
+      window.scrollTo({ top: current, behavior: 'instant' });
+      written = window.scrollY;
+      frame = current === target ? 0 : requestAnimationFrame(tick);
+    };
+    const wheel = (event: WheelEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      )
+        return;
+      if (innerScroller(event.target, event.deltaY)) return;
+      event.preventDefault();
+      if (!frame) {
+        current = target = written = window.scrollY;
+        last = performance.now();
+        frame = requestAnimationFrame(tick);
+      }
+      const unit = event.deltaMode === 1 ? 40 : event.deltaMode === 2 ? window.innerHeight : 1;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      target = Math.min(max, Math.max(0, target + event.deltaY * unit));
+    };
+
+    window.addEventListener('wheel', wheel, { passive: false });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('wheel', wheel);
+    };
+  }, [reduced]);
+
+  return null;
 }
