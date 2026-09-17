@@ -49,6 +49,8 @@ for i in range(5):
  check('incorrect attempt rejected '+str(i+1),call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'})[0]==401)
 call('/')
 check('sixth attempt is rate-limited',call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'})[0]==429)
+check('spoofed Cloudflare IP header does not reset the limit',call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'},headers={'CF-Connecting-IP':'203.0.113.7'})[0]==429)
+check('blocked attempts do not count toward the shared limit',json.loads(Path('.local-data/auth/login-limits.json').read_text())['all']['attempts']==5)
 Path('.local-data/auth/login-limits.json').unlink(missing_ok=True)
 call('/')
 check('cross-origin login rejected',call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'},headers={'Origin':'https://attacker.example'})[0]==403)

@@ -14,8 +14,15 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('');
+  const [scrolled, setScrolled] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -48,7 +55,7 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
     };
   }, [open]);
   return (
-    <header className="site-nav" ref={header}>
+    <header className="site-nav" data-scrolled={scrolled || undefined} ref={header}>
       <div className="nav-inner">
         <a href="#top" className="wordmark" aria-label={`${name} home`}>
           vs<span>.</span>
@@ -63,7 +70,7 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
               {item.label}
               {active === item.href && (
                 <motion.span
-                  className="nav-active-line"
+                  className="nav-active-pill"
                   layoutId="active-section"
                   aria-hidden="true"
                   transition={

@@ -254,9 +254,20 @@ button {
 .site-nav {
   position: sticky;
   top: 0;
-  background: rgb(16 16 16 / 96%);
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
   z-index: 40;
-  border-bottom: 1px solid #ffffff0b;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.4s,
+    border-color 0.4s,
+    box-shadow 0.4s;
+}
+.site-nav[data-scrolled] {
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--fg) 8%, transparent);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
 }
 .nav-inner {
   height: 86px;
@@ -280,25 +291,28 @@ button {
 }
 .desktop-nav {
   display: flex;
-  gap: 32px;
+  gap: 6px;
   margin-left: 56px;
   color: #aaa9a5;
   font-size: 14px;
 }
 .desktop-nav a {
   position: relative;
+  isolation: isolate;
+  padding: 7px 15px;
+  border-radius: 999px;
 }
 .desktop-nav a[aria-current] {
   color: var(--fg);
 }
-.nav-active-line {
-  height: 2px;
-  width: 100%;
+.nav-active-pill {
   position: absolute;
-  background: var(--accent);
-  border-radius: 2px;
-  bottom: -9px;
-  left: 0;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent);
 }
 .nav-contact {
   display: flex;
@@ -362,18 +376,18 @@ h1 em {
 .mobile-break {
   display: none;
 }
-.hero-lower {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 50px;
-  margin-top: 28px;
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  align-items: center;
+  gap: 32px;
 }
 .hero-intro {
   color: var(--muted);
   max-width: 500px;
   font-size: 17px;
   line-height: 1.8;
+  margin-top: 30px;
 }
 .hero-actions {
   display: flex;
@@ -418,28 +432,26 @@ h1 em {
   gap: 9px;
   padding: 11px 15px;
 }
-.hero-side {
+.hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+}
+.hero-captions {
   text-align: right;
   font-family: var(--font-label);
   font-weight: 600;
-  font-size: 11px;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
   line-height: 1.9;
   color: var(--quiet);
 }
-.hero-side span {
+.hero-captions span {
   display: block;
 }
-.hero-symbol {
-  font-size: 70px;
-  line-height: 1;
-  font-family: Arial;
-  font-weight: 100;
-  color: #6b695f;
-  margin-top: 12px;
-}
 .hero-footnote {
-  margin-top: 71px;
+  margin-top: 56px;
   padding: 19px 0;
   border-top: 1px solid var(--line);
   display: flex;
@@ -1264,15 +1276,32 @@ h2 span {
 }
 .timeline li {
   padding: 0 0 34px 28px;
-  border-left: 1px solid #3a3932;
   position: relative;
   display: grid;
   grid-template-columns: 74px 1fr;
   gap: 15px;
 }
+.timeline li::before,
+.timeline li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: #3a3932;
+}
+.timeline li::after {
+  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 30%, transparent));
+  transform-origin: top;
+  scale: 1 0;
+}
 .timeline li:last-child {
   padding-bottom: 0;
-  border-left-color: transparent;
+}
+.timeline li:last-child::before,
+.timeline li:last-child::after {
+  display: none;
 }
 .timeline-dot {
   width: 7px;
@@ -1665,16 +1694,11 @@ h2 span {
     margin-top: 17px;
     letter-spacing: -0.045em;
   }
-  .hero-lower {
-    margin-top: 24px;
-  }
   .hero-intro {
     font-size: 15px;
     line-height: 1.85;
     max-width: 420px;
-  }
-  .hero-side {
-    display: none;
+    margin-top: 24px;
   }
   .hero-actions {
     gap: 9px;
@@ -2082,9 +2106,6 @@ h2 span {
 }
 .contact-bottom > p {
   max-width: 450px;
-}
-.hero-side {
-  font-size: 0.75rem;
 }
 @media (max-width: 700px) {
   .section-heading {

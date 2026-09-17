@@ -8,6 +8,8 @@ import {
 import { defaultContent, contentSchema, type Content } from './content';
 
 const STATE_KEY = 'data/site-state.json';
+// The public site reads only this small record; the full state also holds drafts and history.
+const PUBLISHED_KEY = 'data/published.json';
 const MAX_REVISIONS = 50;
 
 export type State = {
@@ -34,6 +36,7 @@ export type MediaRecord = {
 };
 
 type StoredState = State & { revisions: Revision[]; media: MediaRecord[] };
+type PublishedRecord = { version: number; published_at: string; payload: string };
 type RecordValue<T> = { value: T; etag?: string };
 
 function initialState(): StoredState {
@@ -50,12 +53,18 @@ function initialState(): StoredState {
   };
 }
 
+// Only Vercel deployments use Blob. Every local run, including production builds and settings
+// from `vercel env pull`, stays on .local-data/ even with a Blob token, so it can't touch production.
+function deployed() {
+  return process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview';
+}
+
 function blobEnabled() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return deployed() && Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
 function assertStorageConfigured() {
-  if (process.env.VERCEL && !blobEnabled()) throw new Error('Portfolio storage is not configured');
+  if (deployed() && !blobEnabled()) throw new Error('Portfolio storage is not configured');
 }
 
 async function localPath(key: string) {
@@ -161,10 +170,31 @@ export async function ensureState(): Promise<StoredState> {
   return result.value!;
 }
 
+// Skips the write when the record already holds this publication or a newer one, so a delayed
+// publish can't roll the live site back. Publish times, unlike versions, keep increasing even
+// if the state is recreated.
+async function storePublished(state: StoredState) {
+  const record: PublishedRecord = {
+    version: state.published_version,
+    published_at: state.revisions[0]?.created_at ?? state.updated_at,
+    payload: state.published,
+  };
+  await mutateRecord<PublishedRecord>(PUBLISHED_KEY, (current) =>
+    current?.published_at && current.published_at >= record.published_at ? null : record,
+  );
+}
+
 export async function getPublished(): Promise<Content> {
   try {
+    const published = await readRecord<PublishedRecord>(PUBLISHED_KEY);
+    if (published) return contentSchema.parse(JSON.parse(published.value.payload));
     const state = await readState();
-    return state ? contentSchema.parse(JSON.parse(state.published)) : defaultContent;
+    if (!state) return defaultContent;
+    // Stores from before the published record existed get one on their first visit.
+    await storePublished(state).catch((error) =>
+      console.error('Unable to store the published portfolio record', error),
+    );
+    return contentSchema.parse(JSON.parse(state.published));
   } catch (error) {
     console.error('Published portfolio storage unavailable', error);
     return defaultContent;
@@ -204,7 +234,11 @@ export async function publish(version: number, author: string) {
       revisions: [revision, ...state.revisions].slice(0, MAX_REVISIONS),
     };
   });
-  return result.changed;
+  const state = result.value;
+  // Also runs when this version was already published, so retrying repairs a failed record write.
+  if (!state || state.published_version !== version) return false;
+  await storePublished(state);
+  return true;
 }
 
 export async function listRevisions() {

@@ -75,9 +75,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
         const { done, value } = await reader.read();
         if (done) break;
         size += value.length;
-        if (size > 8 * 1024 * 1024) {
+        // Vercel rejects request bodies over 4.5 MB before they reach this handler.
+        if (size > 4 * 1024 * 1024) {
           await reader.cancel();
-          throw new HttpError(413, 'Choose an image smaller than 8 MB.');
+          throw new HttpError(413, 'Choose an image smaller than 4 MB.');
         }
         chunks.push(value);
       }
@@ -130,7 +131,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
       if (!(await publish(version, user.userId)))
         throw new HttpError(
           409,
-          'The draft changed or is already published. Reload the latest draft before publishing.',
+          'The draft changed in another tab. Reload the latest draft before publishing.',
         );
       return json({ publishedVersion: version });
     }

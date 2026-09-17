@@ -46,6 +46,11 @@ type ApiResults = {
   publish: { publishedVersion: number };
   restore: { version: number };
 };
+// Platform error pages (such as Vercel's 413 or 504) aren't JSON, so fall back to a readable message.
+async function responseError(response: Response, fallback: string) {
+  const value = (await response.json().catch(() => null)) as { error?: string } | null;
+  return new Error(value?.error || fallback);
+}
 async function api<A extends keyof ApiResults>(action: A, body?: unknown): Promise<ApiResults[A]> {
   const response = await fetch(`/api/admin/${action}/`, {
     method: body === undefined ? 'GET' : 'POST',
@@ -53,9 +58,8 @@ async function api<A extends keyof ApiResults>(action: A, body?: unknown): Promi
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: 'no-store',
   });
-  const value = (await response.json()) as ApiResults[A] & { error?: string };
-  if (!response.ok) throw new Error(value.error || 'Request failed. Please try again.');
-  return value;
+  if (!response.ok) throw await responseError(response, 'Request failed. Please try again.');
+  return (await response.json()) as ApiResults[A];
 }
 function at(value: unknown, path: Path): unknown {
   return path.reduce<unknown>((v, k) => (v as Record<string | number, unknown>)?.[k], value);
@@ -178,14 +182,14 @@ export function AdminConsole({
   }
   async function upload(file: File, path?: Path) {
     await run(async () => {
-      if (file.size > 8 * 1024 * 1024) throw new Error('Choose an image smaller than 8 MB.');
+      if (file.size > 4 * 1024 * 1024) throw new Error('Choose an image smaller than 4 MB.');
       const response = await fetch('/api/admin/upload/', {
         method: 'POST',
         headers: { 'Content-Type': file.type, 'X-File-Name': encodeURIComponent(file.name) },
         body: file,
       });
-      const result = (await response.json()) as { error?: string; url: string };
-      if (!response.ok) throw new Error(result.error);
+      if (!response.ok) throw await responseError(response, 'Upload failed. Please try again.');
+      const result = (await response.json()) as { url: string };
       setMedia(await api('media'));
       if (path) change(path, result.url);
       setMessage(
@@ -400,7 +404,6 @@ export function AdminConsole({
           />
         )}
         {name === 'slug' && <small>A unique lowercase name, using hyphens for spaces.</small>}
-        {name === 'siteUrl' && <small>Your portfolio’s canonical HTTPS address.</small>}
       </div>
     );
   }
@@ -668,7 +671,7 @@ export function AdminConsole({
               <div className="admin-field-heading">
                 <div>
                   <h2>Your image library</h2>
-                  <p>Original PNG, JPEG, and WebP files · up to 8 MB each.</p>
+                  <p>Original PNG, JPEG, and WebP files · up to 4 MB each.</p>
                 </div>
                 <button className="admin-button primary" onClick={() => uploadRef.current?.click()}>
                   <Upload size={16} /> Upload image

@@ -10,6 +10,8 @@ import {
 export const SESSION_COOKIE = '__Host-portfolio_admin';
 const SESSION_SECONDS = 12 * 60 * 60;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS_PER_IP = 5;
+const MAX_ATTEMPTS_TOTAL = 30;
 
 type Session = { credential_hash: string; expires_at: number };
 type LoginLimit = { attempts: number; window_start: number };
@@ -76,9 +78,10 @@ export async function createSession() {
   return token;
 }
 
+// Vercel overwrites both headers with the client's address. Headers it doesn't set, such as
+// cf-connecting-ip, arrive exactly as the client sent them and can't be trusted.
 function requestIp(request: Request) {
   return (
-    request.headers.get('cf-connecting-ip') ||
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip') ||
     'unknown'
@@ -94,6 +97,9 @@ export async function reserveLoginAttempt(request: Request) {
       Object.entries(current ?? {}).filter(([, value]) => value.window_start >= windowStart),
     );
     for (const key of [ipKey, 'all']) {
+      // Attempts from an address that is already blocked don't count toward the shared limit,
+      // so a single client can't keep the owner locked out.
+      if (key === 'all' && next[ipKey].attempts > MAX_ATTEMPTS_PER_IP) continue;
       const previous = next[key];
       next[key] =
         !previous || previous.window_start < windowStart
@@ -102,7 +108,12 @@ export async function reserveLoginAttempt(request: Request) {
     }
     return next;
   });
-  return { allowed: limits[ipKey].attempts <= 5 && limits.all.attempts <= 30, ipKey };
+  return {
+    allowed:
+      limits[ipKey].attempts <= MAX_ATTEMPTS_PER_IP &&
+      (limits.all?.attempts ?? 0) <= MAX_ATTEMPTS_TOTAL,
+    ipKey,
+  };
 }
 
 export async function clearLoginAttempts(ipKey: string) {

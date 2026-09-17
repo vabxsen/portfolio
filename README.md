@@ -16,7 +16,7 @@ To change the password, generate a fresh bcrypt cost-12 hash in a trusted enviro
 - Projects: add, edit, remove, reorder, choose featured work, upload screenshots, and edit links and technologies.
 - Page copy, tech stack, journey, and open source: edit centralized content through structured fields.
 - Appearance: accent, background and text colors, motion, and section visibility.
-- Media library: upload PNG, JPEG, and WebP images up to 8 MB, then select them in projects.
+- Media library: upload PNG, JPEG, and WebP images up to 4 MB (Vercel's request size limit), then select them in projects.
 - Save draft keeps changes private. Preview opens the saved draft. Publish updates the server-rendered portfolio immediately without a source rebuild.
 - History restores a published version into a draft. Publishing that draft restores the live content.
 - Export/import backs up content and appearance as validated JSON. Image references remain linked to the persistent media library.
@@ -32,6 +32,8 @@ The console edits portfolio content and supported design settings. Framework sou
    - `ADMIN_PASSWORD_HASH`
 4. Redeploy after adding the variables.
 
+Keep **Enable access to System Environment Variables** turned on (the default). Storage uses Blob only when `VERCEL_ENV` is `production` or `preview`, and canonical URLs come from `VERCEL_PROJECT_PRODUCTION_URL`.
+
 The public portfolio falls back to the source-controlled default content if storage is temporarily unavailable. The admin console fails closed until all secrets and storage are configured.
 
 ## Development
@@ -45,7 +47,7 @@ pnpm typecheck
 pnpm build
 ```
 
-Local development uses the ignored `.local-data/` directory instead of connecting to production Blob storage. Configure `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in your local environment before testing the admin console.
+Only Vercel deployments use Blob storage. Local runs, including `pnpm build && pnpm start` and settings from `vercel env pull`, always use the ignored `.local-data/` directory, even if `BLOB_READ_WRITE_TOKEN` is present, so they never write to production. Before testing the admin console, set `ADMIN_OWNER_EMAIL` and a cost-12 `ADMIN_PASSWORD_HASH` in `.env.local`, escaping each `$` in the hash as `\$`.
 
 ## Validation
 
