@@ -46,6 +46,7 @@ export function PortfolioView({ content }: { content: Content }) {
   ].slice(0, 6);
   const tools = [...new Set(stack.flatMap((group) => group.items))];
   const background = renderedBackground(theme.background);
+  const emailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}`;
   return (
     <div
       className={theme.motion ? 'portfolio-root' : 'portfolio-root motion-disabled'}
@@ -169,7 +170,9 @@ export function PortfolioView({ content }: { content: Content }) {
                   <p className="scroll-fade">{profile.philosophy}</p>
                   <a
                     className="text-link scroll-fade"
-                    href={sections.contact ? '#contact' : `mailto:${profile.email}`}
+                    href={sections.contact ? '#contact' : emailUrl}
+                    target={sections.contact ? undefined : '_blank'}
+                    rel={sections.contact ? undefined : 'noopener noreferrer'}
                   >
                     {copy.about.link} <ArrowUpRight size={16} />
                   </a>
@@ -318,8 +321,10 @@ export function PortfolioView({ content }: { content: Content }) {
                   <OrbitText text={copy.contact.label} />
                   <MagneticLink
                     className="contact-orb"
-                    href={`mailto:${profile.email}`}
+                    href={emailUrl}
                     ariaLabel={`Email ${profile.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <ArrowUpRight strokeWidth={1} size={60} />
                   </MagneticLink>
@@ -327,7 +332,12 @@ export function PortfolioView({ content }: { content: Content }) {
               </div>
               <div className="contact-bottom scroll-fade">
                 <p>{copy.contact.description}</p>
-                <a className="email-link" href={`mailto:${profile.email}`}>
+                <a
+                  className="email-link"
+                  href={emailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Mail size={17} />
                   {profile.email}
                   <ArrowUpRight size={16} />
