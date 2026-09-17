@@ -404,6 +404,9 @@ export function AdminConsole({
           />
         )}
         {name === 'slug' && <small>A unique lowercase name, using hyphens for spaces.</small>}
+        {name === 'background' && (
+          <small>Dark colors appear a shade darker on the live site.</small>
+        )}
       </div>
     );
   }
