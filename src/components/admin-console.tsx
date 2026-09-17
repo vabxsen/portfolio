@@ -452,6 +452,8 @@ export function AdminConsole({
               const next = optional ? e.target.value || null : e.target.value;
               if (name === 'slug' && path[0] === 'projects') {
                 const old = value;
+                // Keep this project's editor open while its Page ID changes.
+                setExpandedProject((current) => (current === old ? e.target.value : current));
                 setContent((c) => {
                   const nextContent = structuredClone(c);
                   nextContent.projects[Number(path[1])].slug = e.target.value;
@@ -699,7 +701,7 @@ export function AdminConsole({
                     </header>
                     <div className="admin-project-column-list">
                       {featuredProjects.map((project, index) => (
-                        <div className="admin-placement-row" key={project.slug}>
+                        <div className="admin-placement-row" key={`${project.slug}-${index}`}>
                           <div>
                             <strong>{project.name || 'Untitled project'}</strong>
                             <span>{project.category || 'No short description yet'}</span>
@@ -748,7 +750,7 @@ export function AdminConsole({
                     </header>
                     <div className="admin-project-column-list">
                       {moreProjects.map((project, index) => (
-                        <div className="admin-placement-row" key={project.slug}>
+                        <div className="admin-placement-row" key={`${project.slug}-${index}`}>
                           <div>
                             <strong>{project.name || 'Untitled project'}</strong>
                             <span>{project.category || 'No short description yet'}</span>
@@ -808,7 +810,8 @@ export function AdminConsole({
                     return (
                       <article
                         className={`admin-project-item ${open ? 'open' : ''}`}
-                        key={project.slug}
+                        // Keyed by position: a slug key would remount the editor on every keystroke.
+                        key={index}
                       >
                         <button
                           type="button"

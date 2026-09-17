@@ -1,16 +1,36 @@
 'use client';
 import { Code2, PenTool } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useMotionPreference } from './motion';
 
 const drift = { stiffness: 45, damping: 16, mass: 0.9 };
+const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-// Platforms orbit a core that alternates between code and design. CSS drives the rotation;
-// the pointer only shifts the layers at different depths.
-export function HeroOrbit({ platforms, accents }: { platforms: string[]; accents: string[] }) {
+export type OrbitProject = { slug: string; accent: string; platforms: number[] };
+type Link = { x1: number; y1: number; x2: number; y2: number; color: string };
+
+function centerWithin(element: Element, origin: DOMRect) {
+  const box = element.getBoundingClientRect();
+  return { x: box.left + box.width / 2 - origin.left, y: box.top + box.height / 2 - origin.top };
+}
+
+// Platforms orbit a core that alternates between code and design, with one dot per project.
+// Hovering a platform pauses the orbit and links it to its projects; clicking jumps to them.
+export function HeroOrbit({
+  platforms,
+  projects,
+}: {
+  platforms: string[];
+  projects: OrbitProject[];
+}) {
   const reduced = useMotionPreference();
   const root = useRef<HTMLDivElement>(null);
+  const labels = useRef<(HTMLSpanElement | null)[]>([]);
+  const dots = useRef<(HTMLSpanElement | null)[]>([]);
+  const focusRef = useRef<number | null>(null);
+  const [focus, setFocus] = useState<number | null>(null);
+  const [links, setLinks] = useState<Link[]>([]);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const x = useSpring(pointerX, drift);
@@ -28,21 +48,89 @@ export function HeroOrbit({ platforms, accents }: { platforms: string[]; accents
       element.dataset.paused = String(!entry.isIntersecting);
     });
     observer.observe(element);
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const move = (event: PointerEvent) => {
+      if (focusRef.current !== null) return;
       pointerX.set((event.clientX / window.innerWidth - 0.5) * 34);
       pointerY.set((event.clientY / window.innerHeight - 0.5) * 34);
     };
-    if (!reduced && finePointer) window.addEventListener('pointermove', move, { passive: true });
+    if (!reduced && finePointer()) window.addEventListener('pointermove', move, { passive: true });
     return () => {
       observer.disconnect();
       window.removeEventListener('pointermove', move);
     };
   }, [reduced, pointerX, pointerY]);
 
+  // Draw the links, following the layers while their drift settles.
+  useEffect(() => {
+    focusRef.current = focus;
+    if (focus === null) {
+      setLinks([]);
+      return;
+    }
+    let frame = 0;
+    let previous = '';
+    const draw = () => {
+      frame = requestAnimationFrame(draw);
+      const container = root.current;
+      const label = labels.current[focus];
+      if (!container || !label) return;
+      const origin = container.getBoundingClientRect();
+      const from = centerWithin(label, origin);
+      const next = projects.flatMap((project, index) => {
+        const dot = dots.current[index];
+        if (!dot || !project.platforms.includes(focus)) return [];
+        const to = centerWithin(dot, origin);
+        return [{ x1: from.x, y1: from.y, x2: to.x, y2: to.y, color: project.accent }];
+      });
+      const key = next
+        .map((link) => `${link.x1 | 0},${link.y1 | 0},${link.x2 | 0},${link.y2 | 0}`)
+        .join();
+      if (key !== previous) {
+        previous = key;
+        setLinks(next);
+      }
+    };
+    draw();
+    return () => cancelAnimationFrame(frame);
+  }, [focus, projects]);
+
+  function jump(platform: number) {
+    const slugs = new Set(
+      projects
+        .filter((project) => project.platforms.includes(platform))
+        .map((project) => project.slug),
+    );
+    const targets = [...document.querySelectorAll<HTMLElement>('[data-project]')].filter((target) =>
+      slugs.has(target.dataset.project ?? ''),
+    );
+    if (!targets.length) return;
+    targets[0].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    for (const target of targets) {
+      target.dataset.spotlit = 'true';
+      window.setTimeout(() => delete target.dataset.spotlit, 2600);
+    }
+  }
+
   return (
-    <div className="hero-orbit" ref={root} aria-hidden="true">
+    <div
+      className="hero-orbit"
+      ref={root}
+      aria-hidden="true"
+      data-focus={focus === null ? undefined : 'true'}
+    >
       <div className="orbit-halo" />
+      <svg className="orbit-links">
+        {links.map((link, index) => (
+          <line
+            key={index}
+            x1={link.x1}
+            y1={link.y1}
+            x2={link.x2}
+            y2={link.y2}
+            style={{ '--dot': link.color } as CSSProperties}
+          />
+        ))}
+      </svg>
       <motion.div className="orbit-layer" style={{ x: outerX, y: outerY }}>
         <div className="orbit-sweep" />
         <div className="orbit-ring orbit-ring-outer">
@@ -52,25 +140,48 @@ export function HeroOrbit({ platforms, accents }: { platforms: string[]; accents
               key={`${platform}-${index}`}
               style={{ '--angle': `${(360 / platforms.length) * index - 60}deg` } as CSSProperties}
             >
-              <span className="orbit-label">{platform}</span>
+              <span
+                className="orbit-label"
+                ref={(element) => {
+                  labels.current[index] = element;
+                }}
+                data-active={focus === index ? 'true' : undefined}
+                data-dim={focus !== null && focus !== index ? 'true' : undefined}
+                onPointerEnter={() => setFocus(index)}
+                onPointerLeave={() => setFocus((current) => (current === index ? null : current))}
+                onClick={() => jump(index)}
+              >
+                {platform}
+                <b className="orbit-count">
+                  {projects.filter((project) => project.platforms.includes(index)).length}
+                </b>
+              </span>
             </span>
           ))}
         </div>
       </motion.div>
       <motion.div className="orbit-layer" style={{ x: middleX, y: middleY }}>
         <div className="orbit-ring orbit-ring-middle">
-          {accents.map((accent, index) => (
+          {projects.map((project, index) => (
             <span
               className="orbit-node"
-              key={`${accent}-${index}`}
+              key={project.slug}
               style={
                 {
-                  '--angle': `${(360 / accents.length) * index}deg`,
-                  '--dot': accent,
+                  '--angle': `${(360 / projects.length) * index}deg`,
+                  '--dot': project.accent,
                 } as CSSProperties
               }
             >
-              <span className="orbit-dot" />
+              <span
+                className="orbit-dot"
+                ref={(element) => {
+                  dots.current[index] = element;
+                }}
+                data-match={
+                  focus === null ? undefined : project.platforms.includes(focus) ? 'true' : 'false'
+                }
+              />
             </span>
           ))}
         </div>
@@ -93,7 +204,7 @@ export function HeroOrbit({ platforms, accents }: { platforms: string[]; accents
 // Lets any `.spotlight` element follow the pointer with one shared listener.
 export function SpotlightTracker() {
   useEffect(() => {
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (!finePointer()) return;
     const move = (event: PointerEvent) => {
       const target = (event.target as Element | null)?.closest<HTMLElement>('.spotlight');
       if (!target) return;
@@ -105,4 +216,203 @@ export function SpotlightTracker() {
     return () => document.removeEventListener('pointermove', move);
   }, []);
   return null;
+}
+
+const snapTargets =
+  '.button, .nav-contact, .hero-contact, .project-link, .contact-orb, .desktop-nav a, .menu-toggle';
+const cursorLag = { stiffness: 520, damping: 42, mass: 0.45 };
+const cursorGrow = { stiffness: 360, damping: 30 };
+
+// A ring that trails the mouse: it wraps buttons, and labels project previews and list rows.
+// The native cursor stays visible; touch devices and reduced motion never see the ring.
+export function CustomCursor() {
+  const reduced = useMotionPreference();
+  const ring = useRef<HTMLDivElement>(null);
+  const label = useRef<HTMLSpanElement>(null);
+  const x = useMotionValue(-100);
+  const y = useMotionValue(-100);
+  const width = useMotionValue(30);
+  const height = useMotionValue(30);
+  const smoothX = useSpring(x, cursorLag);
+  const smoothY = useSpring(y, cursorLag);
+  const smoothWidth = useSpring(width, cursorGrow);
+  const smoothHeight = useSpring(height, cursorGrow);
+
+  useEffect(() => {
+    const element = ring.current;
+    if (!element || reduced || !finePointer()) return;
+    let pointer = { x: -100, y: -100 };
+
+    const update = (target: Element | null) => {
+      const snap = target?.closest<HTMLElement>(snapTargets);
+      const stage = target?.closest('.stage-link');
+      const row = target?.closest<HTMLElement>('.index-row > summary');
+      let mode = 'default';
+      let text = '';
+      if (snap) {
+        const box = snap.getBoundingClientRect();
+        const radius = getComputedStyle(snap).borderTopLeftRadius;
+        x.set(box.left + box.width / 2);
+        y.set(box.top + box.height / 2);
+        width.set(box.width + 14);
+        height.set(box.height + 14);
+        element.style.setProperty(
+          '--cursor-radius',
+          radius.includes('%') ? radius : `calc(${radius} + 7px)`,
+        );
+        mode = 'snap';
+      } else {
+        x.set(pointer.x);
+        y.set(pointer.y);
+        element.style.removeProperty('--cursor-radius');
+        if (stage || row) {
+          mode = 'label';
+          text = stage
+            ? 'View'
+            : (row?.parentElement as HTMLDetailsElement).open
+              ? 'Close'
+              : 'Open';
+          width.set(84);
+          height.set(84);
+        } else {
+          const interactive = target?.closest('a, button, summary');
+          mode = interactive ? 'hover' : 'default';
+          width.set(interactive ? 46 : 30);
+          height.set(interactive ? 46 : 30);
+        }
+      }
+      element.dataset.mode = mode;
+      if (label.current && label.current.textContent !== text) label.current.textContent = text;
+    };
+
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      pointer = { x: event.clientX, y: event.clientY };
+      const appearing = element.dataset.visible !== 'true';
+      element.dataset.visible = 'true';
+      update(event.target as Element);
+      if (appearing) {
+        smoothX.jump(x.get());
+        smoothY.jump(y.get());
+        smoothWidth.jump(width.get());
+        smoothHeight.jump(height.get());
+      }
+    };
+    const refresh = () => {
+      if (element.dataset.visible === 'true')
+        update(document.elementFromPoint(pointer.x, pointer.y));
+    };
+    const leave = (event: MouseEvent) => {
+      if (!event.relatedTarget) element.dataset.visible = 'false';
+    };
+    const afterClick = () => requestAnimationFrame(refresh);
+
+    element.dataset.enabled = 'true';
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('scroll', refresh, { passive: true });
+    document.addEventListener('mouseout', leave);
+    document.addEventListener('click', afterClick);
+    return () => {
+      delete element.dataset.enabled;
+      delete element.dataset.visible;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('scroll', refresh);
+      document.removeEventListener('mouseout', leave);
+      document.removeEventListener('click', afterClick);
+    };
+  }, [reduced, x, y, width, height, smoothX, smoothY, smoothWidth, smoothHeight]);
+
+  return (
+    <motion.div
+      ref={ring}
+      className="cursor"
+      aria-hidden="true"
+      style={{ x: smoothX, y: smoothY, width: smoothWidth, height: smoothHeight }}
+    >
+      <span ref={label} className="cursor-label" />
+    </motion.div>
+  );
+}
+
+// One scroll listener for two effects: the page tints toward the accent of the featured
+// chapter nearest the middle of the screen, and the contact curtain reports how far the
+// page above it has slid away.
+export function ScrollEffects() {
+  const reduced = useMotionPreference();
+  const tint = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const layer = tint.current;
+    const curtain = layer?.closest<HTMLElement>('.curtain');
+    if (!layer || !curtain) return;
+    const chapters = [...curtain.querySelectorAll<HTMLElement>('.chapter')];
+    const cover = curtain.querySelector<HTMLElement>('.curtain-cover');
+    const stage = curtain.querySelector<HTMLElement>('.curtain-stage');
+    let frame = 0;
+
+    // Pin the panel only when it fits on screen; a taller one would be revealed bottom first.
+    const layout = () => {
+      if (!stage) return;
+      const fits = stage.offsetHeight <= window.innerHeight - 24;
+      if (!reduced && fits && window.innerWidth > 700) curtain.dataset.curtain = 'pinned';
+      else delete curtain.dataset.curtain;
+    };
+    const update = () => {
+      frame = 0;
+      const middle = window.innerHeight / 2;
+      if (!reduced) {
+        let accent = '';
+        let strength = 0;
+        for (const chapter of chapters) {
+          const box = chapter.getBoundingClientRect();
+          const distance = Math.abs(box.top + box.height / 2 - middle);
+          const score = 1 - Math.min(distance / (box.height / 2 + middle * 0.6), 1);
+          if (score > strength) {
+            strength = score;
+            accent = chapter.style.getPropertyValue('--project-accent');
+          }
+        }
+        if (accent) layer.style.setProperty('--tint', accent);
+        layer.style.opacity = Math.min(1, strength * 1.5).toFixed(3);
+      }
+      if (cover && stage) {
+        const hidden = window.innerHeight - cover.getBoundingClientRect().bottom;
+        const reveal = Math.min(1, Math.max(0, hidden / Math.max(stage.offsetHeight, 1)));
+        stage.style.setProperty('--reveal', reveal.toFixed(3));
+      }
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    const resize = () => {
+      layout();
+      schedule();
+    };
+    // Keyboard focus inside the pinned panel would otherwise stay hidden behind the page.
+    const reveal = () => {
+      if (!cover || !stage || !curtain.dataset.curtain) return;
+      const coverBottom = cover.getBoundingClientRect().bottom + window.scrollY;
+      const top = coverBottom + stage.offsetHeight - window.innerHeight;
+      if (window.scrollY < top - 1) window.scrollTo({ top, behavior: 'auto' });
+    };
+    const observer = new ResizeObserver(resize);
+
+    layout();
+    update();
+    if (stage) observer.observe(stage);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', resize);
+    stage?.addEventListener('focusin', reveal);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', resize);
+      stage?.removeEventListener('focusin', reveal);
+      delete curtain.dataset.curtain;
+      layer.style.opacity = '0';
+    };
+  }, [reduced]);
+
+  return <div ref={tint} className="page-tint" aria-hidden="true" />;
 }
