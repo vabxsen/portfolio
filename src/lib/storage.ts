@@ -304,7 +304,10 @@ export type MediaFile =
   | { statusCode: 200; stream: ReadableStream<Uint8Array>; type: string; etag: string }
   | { statusCode: 304; stream: null; type: null; etag: string };
 
-export async function getMediaFile(id: string, ifNoneMatch?: string | null): Promise<MediaFile | null> {
+export async function getMediaFile(
+  id: string,
+  ifNoneMatch?: string | null,
+): Promise<MediaFile | null> {
   assertStorageConfigured();
   const key = `media/${id}`;
   if (!blobEnabled()) {
@@ -359,6 +362,7 @@ export async function deleteSecureRecord(key: string) {
   await del(storageKey);
 }
 
-export async function mutateSecureRecord<T>(key: string, update: (current: T | null) => T) {
-  return (await mutateRecord<T>(`auth/${key}.json`, update)).value!;
+// Returning null from `update` leaves the record as it is without writing.
+export async function mutateSecureRecord<T>(key: string, update: (current: T | null) => T | null) {
+  return (await mutateRecord<T>(`auth/${key}.json`, update)).value;
 }

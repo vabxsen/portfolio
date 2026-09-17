@@ -11,7 +11,8 @@ export const SESSION_COOKIE = '__Host-portfolio_admin';
 const SESSION_SECONDS = 12 * 60 * 60;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS_PER_IP = 5;
-const MAX_ATTEMPTS_TOTAL = 30;
+// Bounds the stored record. When more addresses than this are active, the oldest are forgotten.
+const MAX_TRACKED_ADDRESSES = 300;
 
 type Session = { credential_hash: string; expires_at: number };
 type LoginLimit = { attempts: number; window_start: number };
@@ -88,41 +89,44 @@ function requestIp(request: Request) {
   );
 }
 
+// Limits each address separately. There is deliberately no shared limit across addresses: one
+// would let anyone with a handful of addresses lock the owner out. Password checks stay slow
+// (bcrypt) regardless, so spreading guesses over many addresses gains little.
 export async function reserveLoginAttempt(request: Request) {
   const now = Date.now();
   const windowStart = now - LOGIN_WINDOW_MS;
   const ipKey = `ip:${await digest(requestIp(request))}`;
-  const limits = await mutateSecureRecord<LoginLimits>('login-limits', (current) => {
-    const next = Object.fromEntries(
-      Object.entries(current ?? {}).filter(([, value]) => value.window_start >= windowStart),
+  let allowed = false;
+  await mutateSecureRecord<LoginLimits>('login-limits', (current) => {
+    // Storage conflicts rerun this update, so the outcome comes from the final run only.
+    allowed = false;
+    const previous = current?.[ipKey];
+    const active = previous && previous.window_start >= windowStart;
+    // A blocked address changes nothing, so repeated attempts cause no writes.
+    if (active && previous.attempts >= MAX_ATTEMPTS_PER_IP) return null;
+    allowed = true;
+    const entries = Object.entries(current ?? {}).filter(
+      // Drops expired entries and the shared counter older versions kept under "all".
+      ([key, value]) => key.startsWith('ip:') && key !== ipKey && value.window_start >= windowStart,
     );
-    for (const key of [ipKey, 'all']) {
-      // Attempts from an address that is already blocked don't count toward the shared limit,
-      // so a single client can't keep the owner locked out.
-      if (key === 'all' && next[ipKey].attempts > MAX_ATTEMPTS_PER_IP) continue;
-      const previous = next[key];
-      next[key] =
-        !previous || previous.window_start < windowStart
-          ? { attempts: 1, window_start: now }
-          : { ...previous, attempts: previous.attempts + 1 };
-    }
-    return next;
+    entries.sort(([, a], [, b]) => b.window_start - a.window_start);
+    return Object.fromEntries([
+      [
+        ipKey,
+        active
+          ? { ...previous, attempts: previous.attempts + 1 }
+          : { attempts: 1, window_start: now },
+      ],
+      ...entries.slice(0, MAX_TRACKED_ADDRESSES - 1),
+    ]);
   });
-  return {
-    allowed:
-      limits[ipKey].attempts <= MAX_ATTEMPTS_PER_IP &&
-      (limits.all?.attempts ?? 0) <= MAX_ATTEMPTS_TOTAL,
-    ipKey,
-  };
+  return { allowed, ipKey };
 }
 
 export async function clearLoginAttempts(ipKey: string) {
-  const cutoff = Date.now() - LOGIN_WINDOW_MS;
-  await mutateSecureRecord<LoginLimits>('login-limits', (current) =>
-    Object.fromEntries(
-      Object.entries(current ?? {}).filter(
-        ([key, value]) => key !== ipKey && key !== 'all' && value.window_start >= cutoff,
-      ),
-    ),
-  );
+  await mutateSecureRecord<LoginLimits>('login-limits', (current) => {
+    if (!current?.[ipKey]) return null;
+    const { [ipKey]: _cleared, ...rest } = current;
+    return rest;
+  });
 }

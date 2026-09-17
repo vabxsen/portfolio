@@ -75,7 +75,7 @@ status,raw,_=call('/api/admin/save/',{'content':original,'version':state['versio
 check('test content reset',status==200)
 check('test publication reset',call('/api/admin/publish/',{'version':json.loads(raw)['version']},headers=OWNER)[0]==200)
 status,adminhtml,head=call('/admin/',headers=OWNER);Path('work/admin-dashboard.html').write_bytes(adminhtml)
-check('owner dashboard renders',status==200 and b'Your publishing flow' in adminhtml)
+check('owner dashboard renders',status==200 and b'How updates work' in adminhtml)
 check('admin page is not cached',any(value in head.get('cache-control','') for value in ['no-store','no-cache']))
 
 
