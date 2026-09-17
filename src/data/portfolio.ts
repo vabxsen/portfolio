@@ -178,7 +178,7 @@ export const projects: Project[] = [
 ];
 
 // Display these projects first, in this order. All others remain under Show More.
-export const featuredProjectSlugs = ['scoop', 'kimi', 'budgie', 'pricepilot'] as const;
+export const featuredProjectSlugs = ['scoop', 'kimi', 'budgie'] as const;
 
 export const stack = [
   {

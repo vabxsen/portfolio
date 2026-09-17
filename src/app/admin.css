@@ -190,19 +190,43 @@
   min-height: 32px;
   font-size: 12px;
 }
+.admin-button.danger {
+  border-color: #67453d;
+  background: #2a1d19;
+  color: #efb9aa;
+}
+.admin-button.danger:hover {
+  background: #3b2520;
+}
 .admin-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-top: 27px;
   border-bottom: 1px solid #292f26;
   padding-bottom: 20px;
   font-size: 12px;
   color: #a4af9c;
 }
+.admin-status > div {
+  min-width: 0;
+}
+.admin-status strong {
+  display: block;
+  color: #dce4d6;
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-status p {
+  margin: 2px 0 0;
+  color: #8f9b88;
+  font-size: 11px;
+  line-height: 1.45;
+}
 .admin-status > a {
   margin-left: auto;
   color: #d0d9c9;
+  white-space: nowrap;
 }
 .status-dot {
   width: 6px;
@@ -413,7 +437,7 @@
   list-style: none;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 25px;
   margin: 24px 0 0;
 }
@@ -425,6 +449,12 @@
 .admin-steps p {
   margin: 9px 0 0;
   font-size: 12px;
+}
+.admin-flow-note {
+  margin: 24px 0 0 !important;
+  padding-top: 18px;
+  border-top: 1px solid #2d3827;
+  color: #aebe9f !important;
 }
 .admin-feedback {
   display: flex;
@@ -470,6 +500,201 @@
 .admin-featured-row > span {
   flex: 1;
   font-size: 13px;
+}
+.admin-project-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.admin-project-column {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #303b2b;
+  border-radius: 10px;
+  background: #121711;
+}
+.admin-project-column > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid #303b2b;
+  background: #182016;
+}
+.admin-project-column > header h3 {
+  margin: 3px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.admin-project-column > header > b {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #263120;
+  color: var(--admin-accent);
+  font-size: 12px;
+}
+.admin-project-column-list {
+  padding: 8px 14px;
+}
+.admin-placement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1px solid #283123;
+}
+.admin-placement-row:last-child {
+  border-bottom: 0;
+}
+.admin-placement-row > div:first-child {
+  min-width: 0;
+}
+.admin-placement-row strong,
+.admin-placement-row span {
+  display: block;
+}
+.admin-placement-row strong {
+  color: #e8eee3;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-placement-row span {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #8f9b88;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-placement-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+}
+.admin-move-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #3a4832;
+  border-radius: 6px;
+  background: #202a1c;
+  color: #c8d7be;
+  font-size: 10px;
+  font-weight: 600;
+}
+.admin-move-button:hover {
+  background: #2c3826;
+}
+.admin-column-empty {
+  margin: 0 !important;
+  padding: 26px 8px;
+  text-align: center;
+}
+.admin-project-list {
+  display: grid;
+  gap: 9px;
+}
+.admin-project-item {
+  overflow: hidden;
+  border: 1px solid #303b2b;
+  border-radius: 9px;
+  background: #121711;
+}
+.admin-project-item.open {
+  border-color: #536847;
+}
+.admin-project-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 17px;
+  border: 0;
+  background: transparent;
+  color: #e6ece1;
+  text-align: left;
+}
+.admin-project-summary:hover {
+  background: #1a2117;
+}
+.admin-project-index {
+  color: #718068;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-project-summary-copy {
+  min-width: 0;
+}
+.admin-project-summary-copy strong,
+.admin-project-summary-copy small {
+  display: block;
+}
+.admin-project-summary-copy strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-project-summary-copy small {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #8e9a87;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-location-badge {
+  padding: 5px 8px;
+  border: 1px solid #3b4535;
+  border-radius: 999px;
+  color: #aab5a4;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.admin-location-badge.featured {
+  border-color: #506b40;
+  background: #26381f;
+  color: #c9e9ad;
+}
+.admin-edit-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #afbea5;
+  font-size: 11px;
+}
+.admin-project-detail {
+  padding: 22px;
+  border-top: 1px solid #303b2b;
+  background: #161c14;
+}
+.admin-project-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #303b2b;
+}
+.admin-project-toolbar > span {
+  color: #8f9b88;
+  font-size: 11px;
+}
+.admin-project-toolbar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
 }
 .admin-media-grid {
   display: grid;
@@ -590,6 +815,9 @@
   .admin-header h1 {
     font-size: 29px;
   }
+  .admin-project-board {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 760px) {
   .admin-sidebar {
@@ -674,6 +902,35 @@
   }
   .admin-status {
     font-size: 11px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .admin-status > a {
+    width: 100%;
+    margin-left: 18px;
+  }
+  .admin-placement-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .admin-placement-actions {
+    width: 100%;
+  }
+  .admin-move-button {
+    min-height: 36px;
+  }
+  .admin-project-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .admin-edit-label {
+    grid-column: 2 / -1;
+  }
+  .admin-project-detail {
+    padding: 17px;
+  }
+  .admin-project-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 .admin-signout {

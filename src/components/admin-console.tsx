@@ -18,6 +18,9 @@ import {
   LogOut,
   Globe,
   Download,
+  MoveLeft,
+  MoveRight,
+  Pencil,
 } from 'lucide-react';
 import { contentSchema, defaultContent, type Content } from '@/lib/content';
 
@@ -36,8 +39,15 @@ const sections = [
   ['media', 'Media library', ImageIcon],
   ['history', 'History', History],
 ] as const;
+const friendlyLabels: Record<string, string> = {
+  slug: 'Page ID',
+  github: 'GitHub URL',
+  demo: 'Live demo URL',
+  imageAlt: 'Image description',
+  verified: 'Project details verified',
+};
 const label = (s: string) =>
-  s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+  friendlyLabels[s] || s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
 type ApiResults = {
   content: { content: Content; version: number; publishedVersion: number };
   media: Media[];
@@ -99,6 +109,7 @@ export function AdminConsole({
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [error, setError] = useState(''),
+    [expandedProject, setExpandedProject] = useState<string | null>(null),
     [media, setMedia] = useState<Media[]>([]),
     [history, setHistory] = useState<Revision[]>([]);
   const importRef = useRef<HTMLInputElement>(null),
@@ -229,8 +240,58 @@ export function AdminConsole({
     [items[index], items[index + direction]] = [items[index + direction], items[index]];
     change(path, items);
   }
+  function setFeatured(slug: string, featured: boolean) {
+    change(
+      ['featuredProjectSlugs'],
+      featured
+        ? [...content.featuredProjectSlugs, slug]
+        : content.featuredProjectSlugs.filter((item) => item !== slug),
+    );
+  }
+  function moveProject(slug: string, group: 'featured' | 'more', direction: number) {
+    if (group === 'featured') {
+      const index = content.featuredProjectSlugs.indexOf(slug);
+      if (index + direction < 0 || index + direction >= content.featuredProjectSlugs.length) return;
+      moveItem(['featuredProjectSlugs'], index, direction);
+      return;
+    }
+    const moreSlugs = content.projects
+      .filter((project) => !content.featuredProjectSlugs.includes(project.slug))
+      .map((project) => project.slug);
+    const groupIndex = moreSlugs.indexOf(slug);
+    const swapSlug = moreSlugs[groupIndex + direction];
+    if (!swapSlug) return;
+    const projects = [...content.projects];
+    const index = projects.findIndex((project) => project.slug === slug);
+    const swapIndex = projects.findIndex((project) => project.slug === swapSlug);
+    [projects[index], projects[swapIndex]] = [projects[swapIndex], projects[index]];
+    change(['projects'], projects);
+  }
+  function addProject() {
+    const template = content.projects[0] ?? defaultContent.projects[0];
+    const project = blank(template) as Content['projects'][number];
+    project.name = 'Untitled project';
+    change(['projects'], [...content.projects, project]);
+    setExpandedProject(project.slug);
+  }
+  function removeProject(slug: string) {
+    const project = content.projects.find((item) => item.slug === slug);
+    if (!window.confirm(`Remove ${project?.name || 'this project'} from your portfolio?`)) return;
+    setContent((current) => ({
+      ...current,
+      projects: current.projects.filter((item) => item.slug !== slug),
+      featuredProjectSlugs: current.featuredProjectSlugs.filter((item) => item !== slug),
+    }));
+    setExpandedProject(null);
+    setMessage('');
+  }
   function renderField(value: unknown, path: Path): React.ReactNode {
-    const name = String(path[path.length - 1]),
+    const last = path[path.length - 1],
+      name = String(last),
+      numericField = typeof last === 'number',
+      fieldLabel = numericField
+        ? `${label(String(path[path.length - 2]))} ${Number(last) + 1}`
+        : label(name),
       id = `field-${path.join('-')}`;
     if (typeof value === 'boolean')
       return (
@@ -371,8 +432,8 @@ export function AdminConsole({
     const fieldValue = String(value ?? '');
     return (
       <div className={`admin-field ${multiline ? 'wide' : ''}`} key={id}>
-        <label htmlFor={id}>
-          {label(name)}
+        <label htmlFor={id} className={numericField ? 'sr-only' : undefined}>
+          {fieldLabel}
           {optional && <span> optional</span>}
         </label>
         {multiline ? (
@@ -411,6 +472,29 @@ export function AdminConsole({
     );
   }
   const currentTitle = sections.find((s) => s[0] === tab)?.[1] || 'Overview';
+  const featuredProjects = content.featuredProjectSlugs.flatMap((slug) =>
+    content.projects.filter((project) => project.slug === slug),
+  );
+  const moreProjects = content.projects.filter(
+    (project) => !content.featuredProjectSlugs.includes(project.slug),
+  );
+  const publishStatus = dirty
+    ? {
+        title: 'Changes ready to publish',
+        detail: 'Publish changes to save these edits and update the live website.',
+        tone: 'amber',
+      }
+    : version === published
+      ? {
+          title: 'Website is up to date',
+          detail: 'Everything in this editor is already visible on your live portfolio.',
+          tone: '',
+        }
+      : {
+          title: 'Draft saved for later',
+          detail: 'This draft is private. Publish changes when you want it on the live website.',
+          tone: 'amber',
+        };
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -468,10 +552,10 @@ export function AdminConsole({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Preview saved draft <ArrowUpRight size={15} />
+              Preview draft <ArrowUpRight size={15} />
             </a>
             <button className="admin-button" disabled={busy || !dirty} onClick={saveOnly}>
-              <Save size={15} /> Save draft
+              <Save size={15} /> Save for later
             </button>
             <button
               className="admin-button primary"
@@ -479,19 +563,18 @@ export function AdminConsole({
               onClick={publishNow}
             >
               <Globe size={15} />
-              {busy ? 'Working…' : 'Publish'}
+              {busy ? 'Working…' : 'Publish changes'}
             </button>
           </div>
         </header>
         <div className="admin-status">
-          <span className={dirty ? 'status-dot amber' : 'status-dot'} />
-          {dirty
-            ? 'Unsaved changes'
-            : version === published
-              ? 'All changes published'
-              : 'Saved draft · unpublished changes'}
+          <span className={`status-dot ${publishStatus.tone}`} />
+          <div>
+            <strong>{publishStatus.title}</strong>
+            <p>{publishStatus.detail}</p>
+          </div>
           <a href="/" target="_blank" rel="noopener noreferrer">
-            View live site ↗
+            View live website ↗
           </a>
         </div>
         {error && (
@@ -541,21 +624,21 @@ export function AdminConsole({
                 </div>
               </div>
               <section className="admin-panel">
-                <h2>Your publishing flow</h2>
+                <h2>How updates work</h2>
                 <ol className="admin-steps">
                   <li>
                     <b>01 / Edit</b>
-                    <p>Change content, screenshots, and appearance.</p>
+                    <p>Make any content, project, image, or design changes you need.</p>
                   </li>
                   <li>
-                    <b>02 / Preview</b>
-                    <p>Save your draft, then open the preview.</p>
-                  </li>
-                  <li>
-                    <b>03 / Publish</b>
-                    <p>Make your saved changes visible on the live site.</p>
+                    <b>02 / Publish changes</b>
+                    <p>This saves your work and updates the live website in one step.</p>
                   </li>
                 </ol>
+                <p className="admin-flow-note">
+                  “Save for later” is optional. Use it only when you want to continue another time
+                  without changing the live website.
+                </p>
               </section>
               <section className="admin-panel">
                 <h2>Backup & recovery</h2>
@@ -596,53 +679,196 @@ export function AdminConsole({
           {tab === 'projects' && (
             <>
               <section className="admin-panel">
-                <h2>Featured work</h2>
-                <p>Choose the projects shown before Show More. Use the arrows to arrange them.</p>
-                <div className="admin-featured">
-                  {content.projects.map((p) => (
-                    <label key={p.slug}>
-                      <input
-                        type="checkbox"
-                        checked={content.featuredProjectSlugs.includes(p.slug)}
-                        onChange={(e) =>
-                          change(
-                            ['featuredProjectSlugs'],
-                            e.target.checked
-                              ? [...content.featuredProjectSlugs, p.slug]
-                              : content.featuredProjectSlugs.filter((s) => s !== p.slug),
-                          )
-                        }
-                      />
-                      {p.name || 'Untitled project'}
-                    </label>
-                  ))}
-                </div>
-                {content.featuredProjectSlugs.map((slug, i) => (
-                  <div key={slug} className="admin-featured-row">
-                    <span>
-                      {i + 1}. {content.projects.find((p) => p.slug === slug)?.name}
-                    </span>
-                    <button
-                      className="admin-icon"
-                      disabled={i === 0}
-                      aria-label={`Move ${slug} up`}
-                      onClick={() => moveItem(['featuredProjectSlugs'], i, -1)}
-                    >
-                      <ChevronUp size={16} />
-                    </button>
-                    <button
-                      className="admin-icon"
-                      disabled={i === content.featuredProjectSlugs.length - 1}
-                      aria-label={`Move ${slug} down`}
-                      onClick={() => moveItem(['featuredProjectSlugs'], i, 1)}
-                    >
-                      <ChevronDown size={16} />
-                    </button>
+                <div className="admin-field-heading">
+                  <div>
+                    <h2>Homepage project layout</h2>
+                    <p>
+                      Featured projects use large cards. Everything in More Work appears in the
+                      expandable list below them.
+                    </p>
                   </div>
-                ))}
+                </div>
+                <div className="admin-project-board">
+                  <section className="admin-project-column">
+                    <header>
+                      <div>
+                        <span className="admin-kicker">LARGE CARDS</span>
+                        <h3>Featured work</h3>
+                      </div>
+                      <b>{featuredProjects.length}</b>
+                    </header>
+                    <div className="admin-project-column-list">
+                      {featuredProjects.map((project, index) => (
+                        <div className="admin-placement-row" key={project.slug}>
+                          <div>
+                            <strong>{project.name || 'Untitled project'}</strong>
+                            <span>{project.category || 'No short description yet'}</span>
+                          </div>
+                          <div className="admin-placement-actions">
+                            <button
+                              className="admin-icon"
+                              disabled={index === 0}
+                              aria-label={`Move ${project.name} up in Featured work`}
+                              title="Move up"
+                              onClick={() => moveProject(project.slug, 'featured', -1)}
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              className="admin-icon"
+                              disabled={index === featuredProjects.length - 1}
+                              aria-label={`Move ${project.name} down in Featured work`}
+                              title="Move down"
+                              onClick={() => moveProject(project.slug, 'featured', 1)}
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                            <button
+                              className="admin-move-button"
+                              aria-label={`Move ${project.name} to More Work`}
+                              onClick={() => setFeatured(project.slug, false)}
+                            >
+                              More Work <MoveRight size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {!featuredProjects.length && (
+                        <p className="admin-column-empty">Move a project here to feature it.</p>
+                      )}
+                    </div>
+                  </section>
+                  <section className="admin-project-column">
+                    <header>
+                      <div>
+                        <span className="admin-kicker">EXPANDABLE LIST</span>
+                        <h3>More Work</h3>
+                      </div>
+                      <b>{moreProjects.length}</b>
+                    </header>
+                    <div className="admin-project-column-list">
+                      {moreProjects.map((project, index) => (
+                        <div className="admin-placement-row" key={project.slug}>
+                          <div>
+                            <strong>{project.name || 'Untitled project'}</strong>
+                            <span>{project.category || 'No short description yet'}</span>
+                          </div>
+                          <div className="admin-placement-actions">
+                            <button
+                              className="admin-move-button"
+                              aria-label={`Move ${project.name} to Featured work`}
+                              onClick={() => setFeatured(project.slug, true)}
+                            >
+                              <MoveLeft size={15} /> Featured
+                            </button>
+                            <button
+                              className="admin-icon"
+                              disabled={index === 0}
+                              aria-label={`Move ${project.name} up in More Work`}
+                              title="Move up"
+                              onClick={() => moveProject(project.slug, 'more', -1)}
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              className="admin-icon"
+                              disabled={index === moreProjects.length - 1}
+                              aria-label={`Move ${project.name} down in More Work`}
+                              title="Move down"
+                              onClick={() => moveProject(project.slug, 'more', 1)}
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {!moreProjects.length && (
+                        <p className="admin-column-empty">All projects are featured.</p>
+                      )}
+                    </div>
+                  </section>
+                </div>
               </section>
               <section className="admin-panel">
-                {renderField(content.projects, ['projects'])}
+                <div className="admin-field-heading">
+                  <div>
+                    <h2>Project details</h2>
+                    <p>
+                      Open one project at a time to edit its text, links, technology, and image.
+                    </p>
+                  </div>
+                  <button className="admin-button" type="button" onClick={addProject}>
+                    <Plus size={15} /> Add project
+                  </button>
+                </div>
+                <div className="admin-project-list">
+                  {content.projects.map((project, index) => {
+                    const open = expandedProject === project.slug;
+                    const featured = content.featuredProjectSlugs.includes(project.slug);
+                    return (
+                      <article
+                        className={`admin-project-item ${open ? 'open' : ''}`}
+                        key={project.slug}
+                      >
+                        <button
+                          type="button"
+                          className="admin-project-summary"
+                          aria-expanded={open}
+                          onClick={() => setExpandedProject(open ? null : project.slug)}
+                        >
+                          <span className="admin-project-index">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="admin-project-summary-copy">
+                            <strong>{project.name || 'Untitled project'}</strong>
+                            <small>{project.category || 'No short description yet'}</small>
+                          </span>
+                          <span className={`admin-location-badge ${featured ? 'featured' : ''}`}>
+                            {featured ? 'Featured' : 'More Work'}
+                          </span>
+                          <span className="admin-edit-label">
+                            <Pencil size={14} /> {open ? 'Close' : 'Edit'}
+                          </span>
+                        </button>
+                        {open && (
+                          <div className="admin-project-detail">
+                            <div className="admin-project-toolbar">
+                              <span>
+                                Project {index + 1} of {content.projects.length}
+                              </span>
+                              <div>
+                                <button
+                                  type="button"
+                                  className="admin-button small"
+                                  disabled={index === 0}
+                                  onClick={() => moveItem(['projects'], index, -1)}
+                                >
+                                  <ChevronUp size={15} /> Move up
+                                </button>
+                                <button
+                                  type="button"
+                                  className="admin-button small"
+                                  disabled={index === content.projects.length - 1}
+                                  onClick={() => moveItem(['projects'], index, 1)}
+                                >
+                                  <ChevronDown size={15} /> Move down
+                                </button>
+                                <button
+                                  type="button"
+                                  className="admin-button small danger"
+                                  onClick={() => removeProject(project.slug)}
+                                >
+                                  <Trash2 size={15} /> Remove
+                                </button>
+                              </div>
+                            </div>
+                            {renderField(project, ['projects', index])}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
               </section>
             </>
           )}
