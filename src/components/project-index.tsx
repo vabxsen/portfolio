@@ -73,6 +73,7 @@ export function ProjectIndex({
         {projects.map((project, index) => (
           <li
             key={project.slug}
+            data-project={project.slug}
             style={{ '--project-accent': project.accent } as CSSProperties}
             onPointerEnter={(event) => enter(event, project.slug)}
           >

@@ -6,13 +6,14 @@
 .portfolio-root {
   position: relative;
   isolation: isolate;
-  overflow-x: clip;
+  overflow: clip;
 }
+/* The grain lies over the page and its contact panel alike, beneath the navigation. */
 .portfolio-root::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 2;
   pointer-events: none;
   opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -125,6 +126,7 @@
 .orbit-layer {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 .orbit-halo {
   position: absolute;
@@ -660,5 +662,231 @@
   }
   .contact-orbit {
     width: 118px;
+  }
+}
+
+/* Interactive orbit: hovering a platform pauses the orbit and links it to its projects. */
+.orbit-label {
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    opacity 0.3s,
+    color 0.3s,
+    border-color 0.3s,
+    background-color 0.3s;
+}
+.orbit-count {
+  display: inline-grid;
+  place-items: center;
+  width: 0;
+  height: 1.8em;
+  margin: -0.5em 0 -0.5em 0;
+  overflow: hidden;
+  vertical-align: middle;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #121210;
+  font-weight: 800;
+  letter-spacing: 0;
+  opacity: 0;
+  transition:
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s;
+}
+.orbit-label[data-active] {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+}
+.orbit-label[data-active] .orbit-count {
+  width: 1.8em;
+  margin-left: 0.7em;
+  opacity: 1;
+}
+.orbit-label[data-dim] {
+  opacity: 0.4;
+}
+.hero-orbit[data-focus] :is(.orbit-ring, .orbit-label, .orbit-sweep) {
+  animation-play-state: paused;
+}
+.orbit-dot {
+  transition:
+    opacity 0.35s,
+    scale 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.orbit-dot[data-match='true'] {
+  scale: 1.7;
+}
+.orbit-dot[data-match='false'] {
+  opacity: 0.18;
+}
+.orbit-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.orbit-links line {
+  stroke: var(--dot);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 6;
+  opacity: 0.8;
+  animation: orbit-link-flow 0.9s linear infinite;
+}
+@keyframes orbit-link-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+/* Projects reached from the orbit glow briefly. */
+.chapter[data-spotlit] .chapter-stage .project-visual {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--project-accent) 80%, transparent),
+    0 0 90px -10px color-mix(in srgb, var(--project-accent) 55%, transparent);
+}
+.index-list > li[data-spotlit] .index-row > summary::before {
+  opacity: 1;
+}
+.index-list > li[data-spotlit] .index-name {
+  color: color-mix(in srgb, var(--project-accent) 75%, var(--fg));
+}
+
+/* Featured chapters tint the page toward their accent as they cross the middle of the screen. */
+@property --tint {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+.page-tint {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 52%,
+    color-mix(in srgb, var(--tint) 17%, transparent),
+    color-mix(in srgb, var(--tint) 5%, transparent) 62%,
+    transparent
+  );
+  transition:
+    opacity 0.45s ease-out,
+    --tint 0.9s ease;
+}
+
+/* Curtain: the page is a sheet that lifts off a contact panel pinned beneath it. The layout
+   is identical either way; scripts pin the panel only when it fits and motion is allowed. */
+.curtain-cover {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+}
+.curtain-cover > .ambient {
+  top: -86px;
+}
+.curtain-cover > .page-container {
+  padding-bottom: 80px;
+}
+.curtain-stage {
+  display: flow-root;
+  isolation: isolate;
+}
+/* Spacing moves from the section onto the page so the sheet does not end flush with its content.
+   The anchor sits where the panel begins and lands on the section's top rule, as before. */
+.curtain-stage > .contact-section {
+  margin-top: 20px;
+}
+.contact-anchor {
+  scroll-margin-top: -20px;
+}
+.curtain[data-curtain] .curtain-cover {
+  border-radius: 0 0 clamp(28px, 4vw, 56px) clamp(28px, 4vw, 56px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--fg) 9%, transparent),
+    0 70px 120px -40px rgb(0 0 0 / 85%);
+}
+.curtain[data-curtain] .curtain-stage {
+  position: sticky;
+  bottom: 0;
+}
+.curtain[data-curtain] .contact-section {
+  border-top-color: transparent;
+  transform-origin: 50% 100%;
+  scale: calc(0.93 + var(--reveal, 1) * 0.07);
+  opacity: calc(0.15 + var(--reveal, 1) * 0.85);
+}
+.curtain[data-curtain] .contact-section :is(.line-inner, .scroll-fade) {
+  animation: none;
+}
+.curtain[data-curtain] .contact-section .line-inner {
+  translate: 0 calc(clamp(0, (0.92 - var(--reveal, 1)) * 2.2, 1) * 108%);
+}
+
+/* Cursor ring: trails the mouse, wraps buttons, and names what a click on a project does. */
+.cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 70;
+  display: none;
+  place-items: center;
+  translate: -50% -50%;
+  pointer-events: none;
+  border-radius: var(--cursor-radius, 999px);
+  border: 1px solid color-mix(in srgb, var(--fg) 45%, transparent);
+  opacity: 0;
+  transition:
+    opacity 0.3s,
+    border-color 0.3s,
+    background-color 0.3s,
+    border-radius 0.3s;
+}
+.cursor[data-enabled] {
+  display: grid;
+}
+.cursor[data-visible='true'] {
+  opacity: 1;
+}
+.cursor[data-mode='hover'] {
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+.cursor[data-mode='snap'] {
+  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.cursor[data-mode='label'] {
+  border-color: transparent;
+  background: var(--accent);
+}
+.cursor-label {
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #121210;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.cursor[data-mode='label'] .cursor-label {
+  opacity: 1;
+}
+.stage-link {
+  display: block;
+  color: inherit;
+}
+.hero-letter {
+  font-weight: inherit;
+}
+
+@media (max-width: 700px) {
+  .curtain-cover > .ambient {
+    top: -72px;
+  }
+  .curtain-cover > .page-container {
+    padding-bottom: 45px;
   }
 }

@@ -10,6 +10,7 @@ import {
 import {
   useContext,
   createContext,
+  useEffect,
   useRef,
   type ReactNode,
   type CSSProperties,
@@ -55,15 +56,90 @@ function ScrollProgress() {
   return <motion.div className="scroll-progress" style={{ scaleX: progress }} aria-hidden="true" />;
 }
 
+const peakWeight = 800;
+const reach = 190;
+
 // CSS runs the entrance so server and client markup match and it starts before hydration.
+// With a mouse, letters near the cursor ease toward a heavier weight of the variable font.
 export function AnimatedName({ name }: { name: string }) {
+  const reduced = useMotionPreference();
+  const root = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const element = root.current;
+    if (!element || reduced || !window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+      return;
+    const letters = [...element.querySelectorAll<HTMLElement>('.hero-letter')];
+    const restWeight = Number.parseInt(getComputedStyle(element).fontWeight, 10) || 500;
+    const weights = letters.map(() => restWeight);
+    const targets = letters.map(() => restWeight);
+    let centers: { x: number; y: number }[] = [];
+    let frame = 0;
+    const measure = () => {
+      centers = letters.map((letter) => {
+        const box = letter.getBoundingClientRect();
+        return {
+          x: box.left + box.width / 2 + window.scrollX,
+          y: box.top + box.height / 2 + window.scrollY,
+        };
+      });
+    };
+    const tick = () => {
+      let settling = false;
+      letters.forEach((letter, index) => {
+        const next = weights[index] + (targets[index] - weights[index]) * 0.16;
+        weights[index] = Math.abs(targets[index] - next) < 1 ? targets[index] : next;
+        if (weights[index] !== targets[index]) settling = true;
+        letter.style.fontWeight = String(Math.round(weights[index]));
+      });
+      frame = settling ? requestAnimationFrame(tick) : 0;
+    };
+    const start = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+    const move = (event: globalThis.PointerEvent) => {
+      if (!centers.length) measure();
+      const x = event.clientX + window.scrollX;
+      const y = event.clientY + window.scrollY;
+      centers.forEach((center, index) => {
+        const distance = Math.hypot(x - center.x, (y - center.y) * 1.4);
+        const pull = Math.max(0, 1 - distance / reach);
+        targets[index] = restWeight + (peakWeight - restWeight) * pull * pull;
+      });
+      start();
+    };
+    const rest = () => {
+      targets.fill(restWeight);
+      start();
+    };
+    // Measure once the entrance has settled, and again whenever the layout changes.
+    const settle = window.setTimeout(measure, 1600);
+    window.addEventListener('resize', measure);
+    window.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('pointerleave', rest);
+    return () => {
+      window.clearTimeout(settle);
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('pointerleave', rest);
+      letters.forEach((letter) => letter.style.removeProperty('font-weight'));
+    };
+  }, [reduced]);
+
   return (
-    <span className="hero-name">
+    <span className="hero-name" ref={root}>
       <span className="sr-only">{name}</span>
       <span aria-hidden="true">
         {name.split(' ').map((word, index) => (
           <span className="hero-word-mask" key={`${word}-${index}`}>
-            <span style={{ '--i': index } as CSSProperties}>{word}</span>
+            <span style={{ '--i': index } as CSSProperties}>
+              {Array.from(word).map((letter, position) => (
+                <span className="hero-letter" key={position}>
+                  {letter}
+                </span>
+              ))}
+            </span>
           </span>
         ))}
       </span>

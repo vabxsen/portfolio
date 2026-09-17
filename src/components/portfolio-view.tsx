@@ -13,8 +13,14 @@ import {
 
 import { Navbar } from '@/components/navbar';
 import { AnimatedName, MagneticLink, MotionProvider, Reveal } from '@/components/motion';
-import { HeroOrbit, SpotlightTracker } from '@/components/motion-graphics';
+import {
+  CustomCursor,
+  HeroOrbit,
+  ScrollEffects,
+  SpotlightTracker,
+} from '@/components/motion-graphics';
 import { ProjectGallery } from '@/components/project-gallery';
+import { projectPlatforms } from '@/components/project-platforms';
 import { OrbitText, RevealLines, ScrollWords, TechMarquee } from '@/components/text-effects';
 
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
@@ -41,9 +47,11 @@ export function PortfolioView({ content }: { content: Content }) {
     ),
     ...content.projects.filter((project) => !content.featuredProjectSlugs.includes(project.slug)),
   ];
-  const accents = [
-    ...new Set(orderedProjects.map((project) => project.accent.toLowerCase())),
-  ].slice(0, 6);
+  const orbitProjects = orderedProjects.slice(0, 12).map((project) => ({
+    slug: project.slug,
+    accent: project.accent,
+    platforms: projectPlatforms(project, platforms),
+  }));
   const tools = [...new Set(stack.flatMap((group) => group.items))];
   const background = renderedBackground(theme.background);
   const emailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}`;
@@ -62,279 +70,293 @@ export function PortfolioView({ content }: { content: Content }) {
     >
       <MotionProvider enabled={theme.motion}>
         <SpotlightTracker />
-        <div className="ambient" aria-hidden="true">
-          <span />
-          <span />
-        </div>
+        <CustomCursor />
         <a className="skip-link" href="#main">
           Skip to content
         </a>
         <div id="top" />
         <Navbar sections={sections} name={profile.name} />
-        <main id="main" className="page-container">
-          <section className="hero" aria-labelledby="hero-title">
-            <div className="hero-grid">
-              <div className="hero-copy">
-                <div className="hero-eyebrow hero-enter" style={delay(0)}>
-                  <span className="eyebrow-line" /> {copy.heroEyebrow}
+        {/* With room to spare, the page lifts away like a curtain from a pinned contact panel. */}
+        <main id="main" className="curtain">
+          <div className={sections.contact ? 'curtain-cover' : undefined}>
+            <ScrollEffects />
+            <div className="ambient" aria-hidden="true">
+              <span />
+              <span />
+            </div>
+            <div className="page-container">
+              <section className="hero" aria-labelledby="hero-title">
+                <div className="hero-grid">
+                  <div className="hero-copy">
+                    <div className="hero-eyebrow hero-enter" style={delay(0)}>
+                      <span className="eyebrow-line" /> {copy.heroEyebrow}
+                    </div>
+                    <h1 id="hero-title">
+                      <AnimatedName name={profile.name} />
+                      <span className="hero-enter" style={delay(420)}>
+                        {profile.role}
+                        <span className="hero-period">.</span>
+                      </span>
+                    </h1>
+                    <p className="hero-intro hero-enter" style={delay(560)}>
+                      {profile.introduction}
+                    </p>
+                    <div className="hero-actions hero-enter" style={delay(680)}>
+                      {sections.work && (
+                        <MagneticLink className="button button-primary" href="#work">
+                          View my work <ArrowDown size={16} />
+                        </MagneticLink>
+                      )}
+                      <a
+                        className="button button-secondary"
+                        href={profile.github || '#opensource'}
+                        target={profile.github ? '_blank' : undefined}
+                        rel="noopener noreferrer"
+                      >
+                        <Github size={16} /> GitHub <ArrowUpRight size={14} />
+                      </a>
+                      {sections.contact && (
+                        <a className="hero-contact" href="#contact">
+                          Contact <ArrowUpRight size={15} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="hero-visual hero-enter" style={delay(260)}>
+                    <HeroOrbit platforms={platforms} projects={orbitProjects} />
+                    <div className="hero-captions">
+                      <span>{copy.heroSide[0]}</span>
+                      <span>{copy.heroSide[1]}</span>
+                    </div>
+                  </div>
                 </div>
-                <h1 id="hero-title">
-                  <AnimatedName name={profile.name} />
-                  <span className="hero-enter" style={delay(420)}>
-                    {profile.role}
-                    <span className="hero-period">.</span>
-                  </span>
-                </h1>
-                <p className="hero-intro hero-enter" style={delay(560)}>
-                  {profile.introduction}
-                </p>
-                <div className="hero-actions hero-enter" style={delay(680)}>
+                <div className="hero-footnote hero-enter" style={delay(820)}>
+                  <span>{copy.platforms}</span>
                   {sections.work && (
-                    <MagneticLink className="button button-primary" href="#work">
-                      View my work <ArrowDown size={16} />
-                    </MagneticLink>
-                  )}
-                  <a
-                    className="button button-secondary"
-                    href={profile.github || '#opensource'}
-                    target={profile.github ? '_blank' : undefined}
-                    rel="noopener noreferrer"
-                  >
-                    <Github size={16} /> GitHub <ArrowUpRight size={14} />
-                  </a>
-                  {sections.contact && (
-                    <a className="hero-contact" href="#contact">
-                      Contact <ArrowUpRight size={15} />
+                    <a href="#work">
+                      SCROLL TO EXPLORE <ArrowDown size={12} />
                     </a>
                   )}
                 </div>
-              </div>
-              <div className="hero-visual hero-enter" style={delay(260)}>
-                <HeroOrbit platforms={platforms} accents={accents} />
-                <div className="hero-captions">
-                  <span>{copy.heroSide[0]}</span>
-                  <span>{copy.heroSide[1]}</span>
-                </div>
-              </div>
-            </div>
-            <div className="hero-footnote hero-enter" style={delay(820)}>
-              <span>{copy.platforms}</span>
+              </section>
+              {sections.about && <TechMarquee items={tools} />}
               {sections.work && (
-                <a href="#work">
-                  SCROLL TO EXPLORE <ArrowDown size={12} />
-                </a>
+                <section id="work" className="work-section" aria-labelledby="work-heading">
+                  <SectionHeading
+                    number="01"
+                    label={copy.work.label}
+                    lines={[copy.work.title[0], <span>{copy.work.title[1]}</span>]}
+                    description={copy.work.description}
+                  />
+                  <ProjectGallery
+                    projects={content.projects}
+                    featuredProjectSlugs={content.featuredProjectSlugs}
+                    copy={copy}
+                  />
+                </section>
               )}
-            </div>
-          </section>
-          {sections.about && <TechMarquee items={tools} />}
-          {sections.work && (
-            <section id="work" className="work-section" aria-labelledby="work-heading">
-              <SectionHeading
-                number="01"
-                label={copy.work.label}
-                lines={[copy.work.title[0], <span>{copy.work.title[1]}</span>]}
-                description={copy.work.description}
-              />
-              <ProjectGallery
-                projects={content.projects}
-                featuredProjectSlugs={content.featuredProjectSlugs}
-                copy={copy}
-              />
-            </section>
-          )}
-          {sections.about && (
-            <section
-              id="about"
-              className="about-section section-space"
-              aria-labelledby="about-heading"
-            >
-              <div className="about-grid">
-                <div>
-                  <SectionLabel number="02" label={copy.about.label} />
-                  <h2 id="about-heading">
-                    <RevealLines
-                      lines={[copy.about.title[0], <span>{copy.about.title[1]}</span>]}
-                    />
-                  </h2>
-                  <div className="discipline-pair scroll-fade">
-                    <span>
-                      <Code2 size={18} /> {copy.about.build}
-                    </span>
-                    <span>
-                      <PenTool size={17} /> {copy.about.design}
-                    </span>
-                  </div>
-                </div>
-                <div className="about-copy">
-                  <ScrollWords text={profile.bio} />
-                  <p className="scroll-fade">{profile.philosophy}</p>
-                  <a
-                    className="text-link scroll-fade"
-                    href={sections.contact ? '#contact' : emailUrl}
-                  >
-                    {copy.about.link} <ArrowUpRight size={16} />
-                  </a>
-                </div>
-              </div>
-              <Reveal>
-                <div className="stack-header">
-                  <h3>{copy.stack.title}</h3>
-                  <span>{copy.stack.note}</span>
-                </div>
-                <div className="stack-grid">
-                  {stack.map((group) => (
-                    <div className="stack-group spotlight" key={group.label}>
-                      <h4>{group.label}</h4>
-                      <p>{group.description}</p>
-                      <ul>
-                        {group.items.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </Reveal>
-            </section>
-          )}
-          {sections.journey && (
-            <section
-              id="journey"
-              className="journey-section section-space"
-              aria-labelledby="journey-heading"
-            >
-              <div className="journey-grid">
-                <div className="journey-intro">
-                  <SectionLabel number="03" label={copy.journey.label} />
-                  <h2 id="journey-heading">
-                    <RevealLines
-                      lines={[copy.journey.title[0], <span>{copy.journey.title[1]}</span>]}
-                    />
-                  </h2>
-                  <p className="section-description scroll-fade">{copy.journey.description}</p>
-                </div>
-                <ol className="timeline">
-                  {(journey.length ? journey : approach).map((entry) => (
-                    <li key={entry.title}>
-                      <div className="timeline-dot" />
-                      <span className="timeline-period">{entry.period}</span>
-                      <div className="scroll-fade">
-                        <span className="timeline-organization">{entry.organization}</span>
-                        <h3>{entry.title}</h3>
-                        <p>{entry.description}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </section>
-          )}
-          {sections.opensource && (
-            <section
-              id="opensource"
-              className="opensource-section section-space"
-              aria-labelledby="opensource-heading"
-            >
-              <div className="opensource-header">
-                <div>
-                  <SectionLabel number="04" label={copy.openSource.label} />
-                  <h2 id="opensource-heading">
-                    <RevealLines
-                      lines={[copy.openSource.title[0], <span>{copy.openSource.title[1]}</span>]}
-                    />
-                  </h2>
-                </div>
-                <a
-                  className="button button-secondary scroll-fade"
-                  href={profile.github || '#contact'}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {sections.about && (
+                <section
+                  id="about"
+                  className="about-section section-space"
+                  aria-labelledby="about-heading"
                 >
-                  <Github size={16} />{' '}
-                  {profile.github ? new URL(profile.github).pathname.replace('/', '@') : 'GitHub'}{' '}
-                  <ArrowUpRight size={14} />
-                </a>
-              </div>
-              <p className="open-intro scroll-fade">{copy.openSource.description}</p>
-              <Reveal>
-                <div className="repo-grid">
-                  {repositories.map((repo) => (
+                  <div className="about-grid">
+                    <div>
+                      <SectionLabel number="02" label={copy.about.label} />
+                      <h2 id="about-heading">
+                        <RevealLines
+                          lines={[copy.about.title[0], <span>{copy.about.title[1]}</span>]}
+                        />
+                      </h2>
+                      <div className="discipline-pair scroll-fade">
+                        <span>
+                          <Code2 size={18} /> {copy.about.build}
+                        </span>
+                        <span>
+                          <PenTool size={17} /> {copy.about.design}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="about-copy">
+                      <ScrollWords text={profile.bio} />
+                      <p className="scroll-fade">{profile.philosophy}</p>
+                      <a
+                        className="text-link scroll-fade"
+                        href={sections.contact ? '#contact' : emailUrl}
+                      >
+                        {copy.about.link} <ArrowUpRight size={16} />
+                      </a>
+                    </div>
+                  </div>
+                  <Reveal>
+                    <div className="stack-header">
+                      <h3>{copy.stack.title}</h3>
+                      <span>{copy.stack.note}</span>
+                    </div>
+                    <div className="stack-grid">
+                      {stack.map((group) => (
+                        <div className="stack-group spotlight" key={group.label}>
+                          <h4>{group.label}</h4>
+                          <p>{group.description}</p>
+                          <ul>
+                            {group.items.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </Reveal>
+                </section>
+              )}
+              {sections.journey && (
+                <section
+                  id="journey"
+                  className="journey-section section-space"
+                  aria-labelledby="journey-heading"
+                >
+                  <div className="journey-grid">
+                    <div className="journey-intro">
+                      <SectionLabel number="03" label={copy.journey.label} />
+                      <h2 id="journey-heading">
+                        <RevealLines
+                          lines={[copy.journey.title[0], <span>{copy.journey.title[1]}</span>]}
+                        />
+                      </h2>
+                      <p className="section-description scroll-fade">{copy.journey.description}</p>
+                    </div>
+                    <ol className="timeline">
+                      {(journey.length ? journey : approach).map((entry) => (
+                        <li key={entry.title}>
+                          <div className="timeline-dot" />
+                          <span className="timeline-period">{entry.period}</span>
+                          <div className="scroll-fade">
+                            <span className="timeline-organization">{entry.organization}</span>
+                            <h3>{entry.title}</h3>
+                            <p>{entry.description}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </section>
+              )}
+              {sections.opensource && (
+                <section
+                  id="opensource"
+                  className="opensource-section section-space"
+                  aria-labelledby="opensource-heading"
+                >
+                  <div className="opensource-header">
+                    <div>
+                      <SectionLabel number="04" label={copy.openSource.label} />
+                      <h2 id="opensource-heading">
+                        <RevealLines
+                          lines={[
+                            copy.openSource.title[0],
+                            <span>{copy.openSource.title[1]}</span>,
+                          ]}
+                        />
+                      </h2>
+                    </div>
                     <a
-                      className="repo-card spotlight"
-                      key={repo.name}
-                      href={repo.url}
+                      className="button button-secondary scroll-fade"
+                      href={profile.github || '#contact'}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <div className="repo-top">
-                        <span className="repo-prompt" aria-hidden="true">
-                          &gt;
-                          <i />
-                        </span>
-                        <ArrowUpRight size={17} />
-                      </div>
-                      <h3>{repo.name}</h3>
-                      <p>{repo.description}</p>
-                      <div className="repo-meta">
-                        <span>{repo.language}</span>
-                        <span>{repo.activity}</span>
-                      </div>
+                      <Github size={16} />{' '}
+                      {profile.github
+                        ? new URL(profile.github).pathname.replace('/', '@')
+                        : 'GitHub'}{' '}
+                      <ArrowUpRight size={14} />
                     </a>
-                  ))}
+                  </div>
+                  <p className="open-intro scroll-fade">{copy.openSource.description}</p>
+                  <Reveal>
+                    <div className="repo-grid">
+                      {repositories.map((repo) => (
+                        <a
+                          className="repo-card spotlight"
+                          key={repo.name}
+                          href={repo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <div className="repo-top">
+                            <span className="repo-prompt" aria-hidden="true">
+                              &gt;
+                              <i />
+                            </span>
+                            <ArrowUpRight size={17} />
+                          </div>
+                          <h3>{repo.name}</h3>
+                          <p>{repo.description}</p>
+                          <div className="repo-meta">
+                            <span>{repo.language}</span>
+                            <span>{repo.activity}</span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                    <div className="github-note">
+                      <GitPullRequest size={15} />
+                      <span>{copy.openSource.note}</span>
+                      <a
+                        href={profile.github ? `${profile.github}?tab=repositories` : '#contact'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        All repositories <ArrowRight size={15} />
+                      </a>
+                    </div>
+                  </Reveal>
+                </section>
+              )}
+            </div>
+            {sections.contact && <div id="contact" className="contact-anchor" />}
+          </div>
+          {sections.contact && (
+            <div className="curtain-stage">
+              <section
+                className="contact-section section-space page-container"
+                aria-labelledby="contact-heading"
+              >
+                <SectionLabel number="05" label={copy.contact.label} />
+                <div className="contact-title">
+                  <h2 id="contact-heading">
+                    <RevealLines
+                      lines={[
+                        copy.contact.title[0],
+                        <>
+                          <span>{copy.contact.title[1]}</span>
+                          <em>{copy.contact.title[2]}</em>
+                        </>,
+                      ]}
+                    />
+                  </h2>
+                  <div className="contact-orbit scroll-fade">
+                    <OrbitText text={copy.contact.label} />
+                    <MagneticLink
+                      className="contact-orb"
+                      href={emailUrl}
+                      ariaLabel={`Email ${profile.name}`}
+                    >
+                      <ArrowUpRight strokeWidth={1} size={60} />
+                    </MagneticLink>
+                  </div>
                 </div>
-                <div className="github-note">
-                  <GitPullRequest size={15} />
-                  <span>{copy.openSource.note}</span>
-                  <a
-                    href={profile.github ? `${profile.github}?tab=repositories` : '#contact'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    All repositories <ArrowRight size={15} />
+                <div className="contact-bottom scroll-fade">
+                  <p>{copy.contact.description}</p>
+                  <a className="email-link" href={emailUrl}>
+                    <Mail size={17} />
+                    {profile.email}
+                    <ArrowUpRight size={16} />
                   </a>
                 </div>
-              </Reveal>
-            </section>
-          )}
-          {sections.contact && (
-            <section
-              id="contact"
-              className="contact-section section-space"
-              aria-labelledby="contact-heading"
-            >
-              <SectionLabel number="05" label={copy.contact.label} />
-              <div className="contact-title">
-                <h2 id="contact-heading">
-                  <RevealLines
-                    lines={[
-                      copy.contact.title[0],
-                      <>
-                        <span>{copy.contact.title[1]}</span>
-                        <em>{copy.contact.title[2]}</em>
-                      </>,
-                    ]}
-                  />
-                </h2>
-                <div className="contact-orbit scroll-fade">
-                  <OrbitText text={copy.contact.label} />
-                  <MagneticLink
-                    className="contact-orb"
-                    href={emailUrl}
-                    ariaLabel={`Email ${profile.name}`}
-                  >
-                    <ArrowUpRight strokeWidth={1} size={60} />
-                  </MagneticLink>
-                </div>
-              </div>
-              <div className="contact-bottom scroll-fade">
-                <p>{copy.contact.description}</p>
-                <a className="email-link" href={emailUrl}>
-                  <Mail size={17} />
-                  {profile.email}
-                  <ArrowUpRight size={16} />
-                </a>
-              </div>
-            </section>
+              </section>
+            </div>
           )}
         </main>
         <footer className="footer page-container">
