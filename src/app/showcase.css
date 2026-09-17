@@ -594,3 +594,31 @@
     display: none;
   }
 }
+
+/* Tilting previews: a glare, twice the preview's size, brightens the spot under the mouse. */
+.stage-glare {
+  position: absolute;
+  z-index: 4;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgb(255 255 255 / 16%),
+    rgb(255 255 255 / 5%) 16%,
+    transparent 34%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.chapter-stage[data-tilting] .stage-glare {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .chapter-stage .project-visual {
+    will-change: transform;
+  }
+}

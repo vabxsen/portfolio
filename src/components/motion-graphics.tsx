@@ -218,6 +218,135 @@ export function SpotlightTracker() {
   return null;
 }
 
+const maxTilt = 6; // Degrees at the preview's edges.
+const tiltEase = 140; // Time constant in milliseconds.
+
+type Tilt = {
+  stage: HTMLElement;
+  visual: HTMLElement;
+  glare: HTMLElement | null;
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
+};
+
+// Featured project previews tilt in 3D toward the mouse, pressing down where it points, while a
+// soft glare follows it across the surface. Previews ease back flat when the mouse moves away.
+export function TiltStages() {
+  const reduced = useMotionPreference();
+
+  useEffect(() => {
+    if (reduced || !finePointer()) return;
+    const tilts = new Map<HTMLElement, Tilt>();
+    let active: HTMLElement | null = null;
+    let pointer: { x: number; y: number } | null = null;
+    let frame = 0;
+    let last = 0;
+
+    const tick = (now: number) => {
+      frame = 0;
+      const elapsed = last ? Math.min(Math.max(now - last, 0), 50) : 16;
+      last = now;
+      const ease = 1 - Math.exp(-elapsed / tiltEase);
+      let moving = false;
+      for (const tilt of tilts.values()) {
+        tilt.x += (tilt.targetX - tilt.x) * ease;
+        tilt.y += (tilt.targetY - tilt.y) * ease;
+        if (Math.abs(tilt.targetX - tilt.x) + Math.abs(tilt.targetY - tilt.y) > 0.0005)
+          moving = true;
+        else {
+          tilt.x = tilt.targetX;
+          tilt.y = tilt.targetY;
+          if (tilt.stage !== active && !tilt.x && !tilt.y) {
+            tilt.visual.style.removeProperty('transform');
+            tilt.glare?.style.removeProperty('transform');
+            tilts.delete(tilt.stage);
+            continue;
+          }
+        }
+        tilt.visual.style.transform = `perspective(1400px) rotateX(${(-tilt.y * 2 * maxTilt).toFixed(3)}deg) rotateY(${(tilt.x * 2 * maxTilt).toFixed(3)}deg)`;
+        // The glare is twice the preview's size, so half of the pointer's offset centers it there.
+        tilt.glare?.style.setProperty(
+          'transform',
+          `translate(${(tilt.x * 50).toFixed(2)}%, ${(tilt.y * 50).toFixed(2)}%)`,
+        );
+      }
+      if (moving) frame = requestAnimationFrame(tick);
+      else last = 0;
+    };
+
+    const update = (target: Element | null) => {
+      const stage = target?.closest<HTMLElement>('.chapter-stage') ?? null;
+      if (active && active !== stage) {
+        const previous = tilts.get(active);
+        if (previous) previous.targetX = previous.targetY = 0;
+        delete active.dataset.tilting;
+      }
+      active = stage;
+      const visual = stage?.querySelector<HTMLElement>('.project-visual');
+      if (stage && visual && pointer) {
+        let tilt = tilts.get(stage);
+        if (!tilt) {
+          tilt = {
+            stage,
+            visual,
+            glare: visual.querySelector('.stage-glare'),
+            x: 0,
+            y: 0,
+            targetX: 0,
+            targetY: 0,
+          };
+          tilts.set(stage, tilt);
+        }
+        const box = stage.getBoundingClientRect();
+        const clamp = (value: number) => Math.min(Math.max(value, -0.5), 0.5);
+        tilt.targetX = clamp((pointer.x - box.left) / box.width - 0.5);
+        tilt.targetY = clamp((pointer.y - box.top) / box.height - 0.5);
+        stage.dataset.tilting = 'true';
+      }
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      pointer = { x: event.clientX, y: event.clientY };
+      update(event.target instanceof Element ? event.target : null);
+    };
+    // Scrolling moves previews under a still mouse.
+    let scrollFrame = 0;
+    const scroll = () => {
+      if (!pointer || scrollFrame) return;
+      scrollFrame = requestAnimationFrame(() => {
+        scrollFrame = 0;
+        if (pointer) update(document.elementFromPoint(pointer.x, pointer.y));
+      });
+    };
+    const leave = (event: MouseEvent) => {
+      if (event.relatedTarget) return;
+      pointer = null;
+      update(null);
+    };
+
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('scroll', scroll, { passive: true });
+    document.addEventListener('mouseout', leave);
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(scrollFrame);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('scroll', scroll);
+      document.removeEventListener('mouseout', leave);
+      for (const tilt of tilts.values()) {
+        tilt.visual.style.removeProperty('transform');
+        tilt.glare?.style.removeProperty('transform');
+        delete tilt.stage.dataset.tilting;
+      }
+    };
+  }, [reduced]);
+
+  return null;
+}
+
 const snapTargets =
   '.button, .nav-contact, .hero-contact, .project-link, .contact-orb, .desktop-nav a, .menu-toggle';
 const cursorLag = { stiffness: 520, damping: 42, mass: 0.45 };
