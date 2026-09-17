@@ -1,7 +1,9 @@
 import {
+  BlobNotFoundError,
   BlobPreconditionFailedError,
   del,
   get,
+  head,
   put,
   type GetBlobResult,
 } from '@vercel/blob';
@@ -102,12 +104,22 @@ async function deleteLocal(key: string) {
 async function readRecord<T>(key: string): Promise<RecordValue<T> | null> {
   assertStorageConfigured();
   if (!blobEnabled()) return readLocal<T>(key);
-  const result = await get(key, { access: 'private', useCache: false });
-  if (!result || result.statusCode !== 200) return null;
-  return {
-    value: JSON.parse(await new Response(result.stream).text()) as T,
-    etag: result.blob.etag,
-  };
+  try {
+    // Blob content is delivered from its file endpoint, while conditional writes are
+    // checked against the authoritative metadata ETag. Reading metadata first also
+    // preserves optimistic concurrency: a write that lands after this read makes our
+    // subsequent put fail and retry instead of overwriting the newer value.
+    const metadata = await head(key);
+    const result = await get(key, { access: 'private', useCache: false });
+    if (!result || result.statusCode !== 200) return null;
+    return {
+      value: JSON.parse(await new Response(result.stream).text()) as T,
+      etag: metadata.etag,
+    };
+  } catch (error) {
+    if (error instanceof BlobNotFoundError) return null;
+    throw error;
+  }
 }
 
 async function writeRecord<T>(key: string, value: T, etag?: string) {
