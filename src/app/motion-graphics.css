@@ -2,12 +2,6 @@
    Base styles are always the finished state, so reduced motion, the admin motion toggle,
    and browsers without scroll-driven animations all show the page at rest. */
 
-@property --card-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-
 /* Atmosphere: film grain, drifting light, and a faint blueprint grid behind the hero. */
 .portfolio-root {
   position: relative;
@@ -437,7 +431,7 @@
   color: var(--accent);
 }
 
-/* Project cards: accent light behind the preview and a border that traces on hover. */
+/* Project previews: a dotted field and the project's accent light behind each one. */
 .project-visual {
   isolation: isolate;
 }
@@ -476,51 +470,6 @@
     scale: 1.18;
   }
 }
-.project-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  padding: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background: conic-gradient(
-    from var(--card-angle),
-    transparent 0% 62%,
-    color-mix(in srgb, var(--project-accent) 85%, transparent) 80%,
-    transparent 96%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  opacity: 0;
-  transition: opacity 0.45s;
-  animation: card-orbit 5s linear infinite paused;
-}
-.project-card:focus-within::after {
-  opacity: 1;
-}
-@keyframes card-orbit {
-  to {
-    --card-angle: 360deg;
-  }
-}
-@media (hover: hover) and (pointer: fine) {
-  .project-card:hover {
-    box-shadow:
-      0 28px 60px rgb(0 0 0 / 38%),
-      0 0 80px -34px color-mix(in srgb, var(--project-accent) 70%, transparent);
-  }
-  .project-card:hover::after {
-    opacity: 1;
-    animation-play-state: running;
-  }
-}
-
 /* Pointer spotlight for tool groups and repositories. */
 .spotlight {
   position: relative;

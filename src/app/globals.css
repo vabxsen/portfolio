@@ -1,42 +1,5 @@
 @import 'tailwindcss';
 
-.project-disclosure {
-  margin-top: 32px;
-}
-.project-disclosure > summary {
-  width: fit-content;
-  margin: 0 auto;
-  cursor: pointer;
-  list-style: none;
-}
-.project-disclosure > summary::-webkit-details-marker {
-  display: none;
-}
-.project-disclosure > summary::marker {
-  content: '';
-}
-.project-disclosure > summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 6px;
-}
-.project-disclosure .disclosure-less {
-  display: none;
-}
-.project-disclosure[open] .disclosure-more {
-  display: none;
-}
-.project-disclosure[open] .disclosure-less {
-  display: inline;
-}
-.project-disclosure[open] > summary svg {
-  transform: rotate(180deg);
-}
-.project-disclosure > summary svg {
-  transition: transform 0.2s ease;
-}
-.project-disclosure > .projects-grid {
-  margin-top: 28px;
-}
 .kimi-preview {
   position: relative;
   width: 100%;
@@ -520,43 +483,6 @@ h2 span {
   color: var(--quiet);
   font-size: 11px;
 }
-.projects-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-}
-.projects-grid > div {
-  min-width: 0;
-}
-.project-card {
-  height: 100%;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  overflow: hidden;
-  position: relative;
-  transition: border-color 0.3s;
-}
-.project-card:hover {
-  border-color: #53514b;
-}
-.project-card:before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    330px circle at var(--pointer-x, 50%) var(--pointer-y, 0%),
-    #ffffff05,
-    transparent 80%
-  );
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.project-card:hover:before {
-  opacity: 1;
-}
 .project-visual {
   height: 360px;
   position: relative;
@@ -571,105 +497,6 @@ h2 span {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.visual-meta {
-  position: absolute;
-  left: 23px;
-  right: 23px;
-  top: 17px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: #96958c;
-  z-index: 3;
-}
-.visual-meta > span:last-child {
-  font-size: 10px;
-  color: #aaa69a;
-}
-.project-content {
-  padding: 24px 26px 0;
-}
-.project-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-}
-.project-title h3 {
-  font-size: 25px;
-  letter-spacing: -0.04em;
-  font-weight: 500;
-}
-.project-actions {
-  display: flex;
-  gap: 7px;
-}
-.project-actions a {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  color: #9b9a94;
-  border: 1px solid #343431;
-  border-radius: 50%;
-}
-.project-actions a:hover {
-  color: var(--fg);
-  background: #2d2c28;
-  border-color: #6e685a;
-}
-.project-category {
-  font-size: 14px;
-  color: #c4bdae;
-  margin-top: 3px;
-}
-.project-description {
-  margin-top: 15px;
-  color: #979790;
-  font-size: 14px;
-  line-height: 1.7;
-  min-height: 48px;
-}
-.project-tags {
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  gap: 7px;
-  padding: 0;
-  margin: 20px 0 23px;
-}
-.project-tags li {
-  font-size: 11px;
-  border: 1px solid #353532;
-  border-radius: 4px;
-  line-height: 1.4;
-  padding: 5px 8px;
-  color: #a7a79d;
-  font-family: var(--font-label);
-  font-weight: 550;
-}
-.project-bottom {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  border-top: 1px solid #2a2a27;
-  min-height: 54px;
-  align-items: center;
-  font-size: 12px;
-  color: #a5a39a;
-}
-.project-bottom a {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.project-bottom > span {
-  color: #8d8b83;
 }
 .project-image {
   position: relative;
@@ -750,12 +577,6 @@ h2 span {
   right: 165px;
   transform: rotate(-8deg);
 }
-.project-card:hover .phone-front {
-  transform: translateY(-6px) rotate(5deg);
-}
-.project-card:hover .phone-back {
-  transform: translateY(-3px) rotate(-5deg);
-}
 .mock-window {
   width: calc(100% - 70px);
   max-width: 470px;
@@ -768,9 +589,6 @@ h2 span {
   height: 280px;
   overflow: hidden;
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.project-card:hover .mock-window {
-  transform: translateY(11px);
 }
 .mock-bar {
   height: 27px;
@@ -1597,12 +1415,6 @@ h2 span {
     flex-direction: column;
     gap: 12px;
   }
-  .project-description {
-    min-height: 70px;
-  }
-  .project-content {
-    padding: 21px 20px 0;
-  }
   .repo-grid {
     gap: 12px;
   }
@@ -1616,14 +1428,6 @@ h2 span {
     align-items: flex-start;
     flex-direction: column;
     gap: 24px;
-  }
-  .visual-meta {
-    left: 17px;
-    right: 17px;
-    font-size: 9px;
-  }
-  .visual-meta > span:last-child {
-    font-size: 9px;
   }
 }
 @media (max-width: 700px) {
@@ -1753,31 +1557,8 @@ h2 span {
     margin-top: 28px;
     letter-spacing: 0.04em;
   }
-  .projects-grid {
-    grid-template-columns: 1fr;
-    gap: 23px;
-  }
   .project-visual {
     height: 340px;
-  }
-  .project-content {
-    padding: 21px 23px 0;
-  }
-  .project-description {
-    min-height: 0;
-    font-size: 14px;
-  }
-  .project-title h3 {
-    font-size: 25px;
-  }
-  .project-category {
-    font-size: 14px;
-  }
-  .project-tags li {
-    font-size: 11px;
-  }
-  .project-bottom {
-    font-size: 12px;
   }
   .mock-window {
     width: calc(100% - 54px);
@@ -2012,9 +1793,6 @@ h2 span {
   .hero-footnote > a {
     font-size: 8px;
   }
-  .visual-meta {
-    font-size: 8px;
-  }
   .contact-title h2 {
     font-size: 2.7rem;
   }
@@ -2032,7 +1810,6 @@ h2 span {
     transition: none !important;
     animation: none !important;
   }
-  .project-card,
   .mock-window {
     transform: none !important;
   }
@@ -2054,7 +1831,6 @@ h2 span {
     width: 155px;
   }
 }
-.project-description,
 .timeline p,
 .about-copy > p:nth-child(2),
 .section-description,
@@ -2062,8 +1838,6 @@ h2 span {
 .contact-bottom > p {
   font-size: 1rem;
 }
-.project-category,
-.project-bottom,
 .stack-group p,
 .repo-card > p,
 .footer nav,
@@ -2072,11 +1846,8 @@ h2 span {
 .github-note {
   font-size: 0.875rem;
 }
-.project-tags li,
 .stack-group li,
 .repo-meta,
-.visual-meta,
-.visual-meta > span:last-child,
 .work-caption,
 .section-label,
 .section-label > span,
@@ -2094,9 +1865,6 @@ h2 span {
 }
 .hero-eyebrow {
   line-height: 1.6;
-}
-.project-description {
-  min-height: 82px;
 }
 .timeline li {
   grid-template-columns: 85px 1fr;
@@ -2130,22 +1898,11 @@ h2 span {
     font-size: 0.625rem;
     gap: 14px;
   }
-  .visual-meta,
-  .visual-meta > span:last-child {
-    font-size: 0.625rem;
-  }
-  .project-description {
-    min-height: 0;
-  }
   .timeline-period {
     font-size: 0.625rem;
   }
   .timeline li {
     grid-template-columns: 75px 1fr;
-  }
-  .project-actions a {
-    width: 40px;
-    height: 40px;
   }
   .email-link {
     font-size: 0.875rem;
