@@ -114,7 +114,7 @@ export const defaultContent: Content = {
   approach: data.approach,
   repositories: data.repositories,
   copy,
-  theme: { accent: '#d4bc94', background: '#0b0b0b', foreground: '#eeeae3', motion: true },
+  theme: { accent: '#d4bc94', background: '#101010', foreground: '#eeeae3', motion: true },
   sections: { work: true, about: true, journey: true, opensource: true, contact: true },
   seo: {
     title: 'Vaibhav Sen — Developer & UI/UX Designer',

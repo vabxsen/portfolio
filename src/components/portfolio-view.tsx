@@ -19,6 +19,15 @@ import { OrbitText, RevealLines, ScrollWords, TechMarquee } from '@/components/t
 
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
+// Dark saved backgrounds render at half brightness so the page reads deeper; light colors are
+// left as chosen.
+function renderedBackground(hex: string) {
+  const channels = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16));
+  if (Math.max(...channels) > 0x40) return hex;
+  const halved = channels.map((channel) => Math.round(channel / 2));
+  return `#${halved.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export function PortfolioView({ content }: { content: Content }) {
   const { profile, stack, journey, approach, repositories, copy, sections, theme } = content;
   const platforms = copy.platforms
@@ -36,15 +45,16 @@ export function PortfolioView({ content }: { content: Content }) {
     ...new Set(orderedProjects.map((project) => project.accent.toLowerCase())),
   ].slice(0, 6);
   const tools = [...new Set(stack.flatMap((group) => group.items))];
+  const background = renderedBackground(theme.background);
   return (
     <div
       className={theme.motion ? 'portfolio-root' : 'portfolio-root motion-disabled'}
       style={
         {
           '--accent': theme.accent,
-          '--bg': theme.background,
+          '--bg': background,
           '--fg': theme.foreground,
-          background: theme.background,
+          background,
           color: theme.foreground,
         } as CSSProperties
       }
