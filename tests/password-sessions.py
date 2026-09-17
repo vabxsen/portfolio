@@ -50,7 +50,15 @@ for i in range(5):
 call('/')
 check('sixth attempt is rate-limited',call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'})[0]==429)
 check('spoofed Cloudflare IP header does not reset the limit',call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'},headers={'CF-Connecting-IP':'203.0.113.7'})[0]==429)
-check('blocked attempts do not count toward the shared limit',json.loads(Path('.local-data/auth/login-limits.json').read_text())['all']['attempts']==5)
+check('blocked attempts are not recorded and nothing is shared across addresses',[v['attempts'] for v in json.loads(Path('.local-data/auth/login-limits.json').read_text()).values()]==[5])
+Path('.local-data/auth/login-limits.json').unlink(missing_ok=True)
+for address in range(6):
+ for i in range(5):
+  call('/')
+  call('/api/auth/login/',{'email':'seedy@sites.test','password':'invalid'},headers={'X-Forwarded-For':'198.51.100.'+str(address+1)})
+call('/')
+check('failed attempts from other addresses do not lock the owner out',call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'},headers={'X-Forwarded-For':'198.51.100.99'})[0]==200)
+check('each address keeps its own count',sorted(v['attempts'] for v in json.loads(Path('.local-data/auth/login-limits.json').read_text()).values())==[5]*6)
 Path('.local-data/auth/login-limits.json').unlink(missing_ok=True)
 call('/')
 check('cross-origin login rejected',call('/api/auth/login/',{'email':'seedy@sites.test','password':'Local-owner-test!6'},headers={'Origin':'https://attacker.example'})[0]==403)
