@@ -12,6 +12,7 @@ import {
   storeMediaFile,
 } from '@/lib/storage';
 import { requireOwner, checkWriteOrigin, limitedJson, HttpError } from '@/lib/admin-auth';
+import { sanitizeImageMetadata } from '@/lib/image-metadata';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
@@ -104,11 +105,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
         type = 'image/webp';
         ext = 'webp';
       } else throw new HttpError(400, 'Use a PNG, JPEG, or WebP image.');
+      let sanitized: Uint8Array;
+      try {
+        sanitized = sanitizeImageMetadata(bytes, type);
+      } catch {
+        throw new HttpError(400, 'Use a valid PNG, JPEG, or WebP image.');
+      }
       const id = `${crypto.randomUUID()}.${ext}`,
         name = decodeURIComponent(request.headers.get('x-file-name') || 'Image').slice(0, 150);
-      await storeMediaFile(id, bytes, type);
+      await storeMediaFile(id, sanitized, type);
       try {
-        await addMedia({ id, name, type, size, created_at: new Date().toISOString() });
+        await addMedia({
+          id,
+          name,
+          type,
+          size: sanitized.length,
+          created_at: new Date().toISOString(),
+        });
       } catch (e) {
         await removeMediaFile(id);
         throw e;

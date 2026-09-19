@@ -4,7 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "pnpm check:media",
     "build": "next build",
+    "check:media": "node --experimental-strip-types scripts/check-public-image-metadata.mts",
+    "sanitize:media": "node --experimental-strip-types scripts/sanitize-public-images.mts",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src next.config.ts postcss.config.mjs tsconfig.json"
