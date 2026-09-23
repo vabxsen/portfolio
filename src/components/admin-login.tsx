@@ -26,8 +26,12 @@ export function AdminLogin({ initialError = '' }: { initialError?: string }) {
         body: JSON.stringify({ email, password }),
         cache: 'no-store',
       });
-      const body = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(body.error || 'Unable to sign in.');
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+        ok?: boolean;
+      } | null;
+      if (!response.ok || !body?.ok)
+        throw new Error(body?.error || 'Sign-in is temporarily unavailable. Please try again.');
       setPassword('');
       window.location.assign('/admin/');
     } catch (e) {

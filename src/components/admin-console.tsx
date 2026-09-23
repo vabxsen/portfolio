@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { ZodError } from 'zod';
 import {
   ArrowUpRight,
   Save,
@@ -82,9 +83,11 @@ function blank(value: unknown): unknown {
         k,
         k === 'slug'
           ? `project-${crypto.randomUUID().slice(0, 8)}`
-          : k === 'accent'
-            ? '#d4bc94'
-            : blank(v),
+          : ['github', 'demo', 'image'].includes(k)
+            ? null
+            : k === 'accent'
+              ? '#d4bc94'
+              : blank(v),
       ]),
     );
   if (typeof value === 'boolean') return false;
@@ -114,6 +117,14 @@ export function AdminConsole({
     [history, setHistory] = useState<Revision[]>([]);
   const importRef = useRef<HTMLInputElement>(null),
     uploadRef = useRef<HTMLInputElement>(null);
+  const running = useRef(false);
+  const projectImages = [
+    ...new Set(
+      [...defaultContent.projects, ...initialContent.projects, ...content.projects]
+        .map((project) => project.image)
+        .filter((image): image is string => Boolean(image) && !image?.startsWith('/media/')),
+    ),
+  ];
   const dirty = JSON.stringify(content) !== saved;
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
@@ -151,18 +162,32 @@ export function AdminConsole({
     );
     a.href = url;
     a.download = 'portfolio-backup.json';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // Let the browser consume the Blob URL before releasing it.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function run(action: () => Promise<void>) {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setError('');
     setMessage('');
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Your edits are still here.');
+      setError(
+        e instanceof ZodError
+          ? e.issues
+              .map((issue) => `${issue.path.map(String).map(label).join(' → ')}: ${issue.message}`)
+              .join('\n')
+          : e instanceof Error
+            ? e.message
+            : 'Something went wrong. Your edits are still here.',
+      );
     } finally {
+      running.current = false;
       setBusy(false);
     }
   }
@@ -177,6 +202,23 @@ export function AdminConsole({
     run(async () => {
       await save();
       setMessage('Draft saved. The live portfolio is unchanged.');
+    });
+  }
+  function previewDraft() {
+    if (running.current) return;
+    // Open synchronously so browsers don't block the preview after the save request.
+    const preview = window.open('about:blank', '_blank');
+    if (preview) preview.opener = null;
+    void run(async () => {
+      try {
+        if (!preview) throw new Error('Allow pop-ups for this site to open the draft preview.');
+        if (dirty) await save();
+        preview.location.replace('/admin/preview/');
+        setMessage('Preview opened with your latest saved edits.');
+      } catch (error) {
+        preview?.close();
+        throw error;
+      }
     });
   }
   function publishNow() {
@@ -315,6 +357,7 @@ export function AdminConsole({
               <button
                 type="button"
                 className="admin-button small"
+                aria-label={`Add ${label(name)}`}
                 onClick={() => {
                   const template = value[0] ?? (at(defaultContent, path) as unknown[])?.[0] ?? '';
                   change(path, [...value, blank(template)]);
@@ -401,12 +444,19 @@ export function AdminConsole({
             value={String(value || '')}
             onChange={(e) => change(path, e.target.value || null)}
           >
-            <option value="">Use interface study</option>
-            {Boolean(value) && !media.some((m) => `/media/${m.id}` === value) && (
-              <option value={String(value)}>
-                Current image · {String(value).split('/').pop()}
+            <option value="">Use default project preview</option>
+            {Boolean(value) &&
+              !projectImages.includes(String(value)) &&
+              !media.some((m) => `/media/${m.id}` === value) && (
+                <option value={String(value)}>
+                  Current image · {String(value).split('/').pop()}
+                </option>
+              )}
+            {projectImages.map((image) => (
+              <option key={image} value={image}>
+                Project image · {image.split('/').pop()}
               </option>
-            )}
+            ))}
             {media.map((m) => (
               <option key={m.id} value={`/media/${m.id}`}>
                 {m.name}
@@ -548,14 +598,9 @@ export function AdminConsole({
             <h1>{currentTitle}</h1>
           </div>
           <div className="admin-actions">
-            <a
-              className="admin-button"
-              href="/admin/preview/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <button className="admin-button" type="button" disabled={busy} onClick={previewDraft}>
               Preview draft <ArrowUpRight size={15} />
-            </a>
+            </button>
             <button className="admin-button" disabled={busy || !dirty} onClick={saveOnly}>
               <Save size={15} /> Save for later
             </button>
@@ -807,6 +852,8 @@ export function AdminConsole({
                   {content.projects.map((project, index) => {
                     const open = expandedProject === project.slug;
                     const featured = content.featuredProjectSlugs.includes(project.slug);
+                    const group = featured ? featuredProjects : moreProjects;
+                    const groupIndex = group.findIndex((item) => item.slug === project.slug);
                     return (
                       <article
                         className={`admin-project-item ${open ? 'open' : ''}`}
@@ -837,22 +884,27 @@ export function AdminConsole({
                           <div className="admin-project-detail">
                             <div className="admin-project-toolbar">
                               <span>
-                                Project {index + 1} of {content.projects.length}
+                                {featured ? 'Featured work' : 'More Work'} · Position{' '}
+                                {groupIndex + 1} of {group.length}
                               </span>
                               <div>
                                 <button
                                   type="button"
                                   className="admin-button small"
-                                  disabled={index === 0}
-                                  onClick={() => moveItem(['projects'], index, -1)}
+                                  disabled={groupIndex === 0}
+                                  onClick={() =>
+                                    moveProject(project.slug, featured ? 'featured' : 'more', -1)
+                                  }
                                 >
                                   <ChevronUp size={15} /> Move up
                                 </button>
                                 <button
                                   type="button"
                                   className="admin-button small"
-                                  disabled={index === content.projects.length - 1}
-                                  onClick={() => moveItem(['projects'], index, 1)}
+                                  disabled={groupIndex === group.length - 1}
+                                  onClick={() =>
+                                    moveProject(project.slug, featured ? 'featured' : 'more', 1)
+                                  }
                                 >
                                   <ChevronDown size={15} /> Move down
                                 </button>

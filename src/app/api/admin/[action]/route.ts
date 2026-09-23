@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import sharp from 'sharp';
 import { contentSchema } from '@/lib/content';
 import {
   addMedia,
   ensureState,
   getRevision,
+  getPublishedVersion,
   listMedia,
   listRevisions,
   publish,
@@ -41,7 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ acti
       return json({
         content: JSON.parse(s.draft),
         version: s.version,
-        publishedVersion: s.published_version,
+        publishedVersion: await getPublishedVersion(s),
         updatedAt: s.updated_at,
       });
     }
@@ -108,8 +110,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
       let sanitized: Uint8Array;
       try {
         sanitized = sanitizeImageMetadata(bytes, type);
+        // A recognizable header is not enough: decode the pixels before accepting
+        // the upload, while storing the original sanitized bytes without recompression.
+        await sharp(sanitized, { limitInputPixels: 24_000_000, failOn: 'warning' }).stats();
       } catch {
-        throw new HttpError(400, 'Use a valid PNG, JPEG, or WebP image.');
+        throw new HttpError(400, 'Use a valid PNG, JPEG, or WebP image up to 24 megapixels.');
       }
       const id = `${crypto.randomUUID()}.${ext}`,
         name = decodeURIComponent(request.headers.get('x-file-name') || 'Image').slice(0, 150);

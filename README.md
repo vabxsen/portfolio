@@ -6,7 +6,7 @@ A responsive Next.js App Router portfolio with an owner-only content management 
 
 Open `/admin/` or use the Admin link in the footer. Sign in with the configured owner email and password. The password is never stored in source or sent to the browser. `ADMIN_PASSWORD_HASH` is a server-only bcrypt cost-12 hash, and the console has no registration or platform-identity bypass.
 
-Successful login creates a random 256-bit session token in a Secure, HttpOnly, SameSite=Strict, host-only cookie. Only its SHA-256 digest is stored. Sessions expire after 12 hours, logout revokes them server-side, and changing the configured email or password hash invalidates existing sessions. Login attempts are limited to 5 per address and 30 total per 15-minute window. Login and all write operations require a same-origin request.
+Successful login creates a random 256-bit session token in a Secure, HttpOnly, SameSite=Strict, host-only cookie. Only its SHA-256 digest is stored. Sessions expire after 12 hours, logout revokes them server-side, and changing the configured email or password hash invalidates existing sessions. Login attempts are limited to 5 per address per 15-minute window. Login and all write operations require a same-origin request.
 
 To change the password, generate a fresh bcrypt cost-12 hash in a trusted environment, update `ADMIN_PASSWORD_HASH` in Vercel Project Settings, and redeploy. Never commit the password or its hash.
 
@@ -16,8 +16,8 @@ To change the password, generate a fresh bcrypt cost-12 hash in a trusted enviro
 - Projects: add, edit, remove, reorder, choose featured work, upload screenshots, and edit links and technologies.
 - Page copy, tech stack, journey, and open source: edit centralized content through structured fields.
 - Appearance: accent, background and text colors, motion, and section visibility.
-- Media library: upload PNG, JPEG, and WebP images up to 4 MB (Vercel's request size limit), then select them in projects.
-- Save draft keeps changes private. Preview opens the saved draft. Publish updates the server-rendered portfolio immediately without a source rebuild.
+- Media library: upload PNG, JPEG, and WebP images up to 4 MB and 24 megapixels, then select them in projects. Corrupt images are rejected; accepted images retain their sanitized original bytes without recompression.
+- Save for later keeps changes private. Preview draft saves pending edits and opens the current draft. Publish changes updates the server-rendered portfolio immediately without a source rebuild.
 - History restores a published version into a draft. Publishing that draft restores the live content.
 - Export/import backs up content and appearance as validated JSON. Image references remain linked to the persistent media library.
 
@@ -62,6 +62,8 @@ python tests/admin-login-fallback.py
 ```
 
 The tests write only to `.local-data/` and never connect to production.
+
+`tests/browser-audit.cjs` also exercises public links and disclosures, mobile navigation, login, project placement/order, draft preview, publishing and retry recovery, backup import/export, content editors, uploads, history, concurrent edits, and logout. Run it only in a disposable checkout on localhost with the same synthetic owner as the integration suites. It changes local drafts, publications, and media. Run suites sequentially to avoid sharing login counters and fixtures. Install Playwright in your test tooling (or set `PLAYWRIGHT_MODULE` to an existing package), set `CHROME_PATH` if using system Chrome, and run `node tests/browser-audit.cjs`. `AUDIT_ADMIN_ONLY=1` skips public checks when investigating an admin failure.
 
 ## Source organization
 

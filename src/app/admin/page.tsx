@@ -1,5 +1,5 @@
 import { requireOwner, HttpError } from '@/lib/admin-auth';
-import { ensureState } from '@/lib/storage';
+import { ensureState, getPublishedVersion } from '@/lib/storage';
 import { contentSchema } from '@/lib/content';
 import { AdminConsole } from '@/components/admin-console';
 import { AdminLogin } from '@/components/admin-login';
@@ -8,10 +8,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Portfolio admin', robots: { index: false, follow: false } };
 function loginError(code: string) {
   if (code === 'invalid') return 'Incorrect email or password.';
-  if (code === 'rate-limited')
-    return 'Too many login attempts. Please try again in 15 minutes.';
-  if (code === 'unavailable')
-    return 'Login is temporarily unavailable. Please try again shortly.';
+  if (code === 'rate-limited') return 'Too many login attempts. Please try again in 15 minutes.';
+  if (code === 'unavailable') return 'Login is temporarily unavailable. Please try again shortly.';
 }
 export default async function Admin({
   searchParams,
@@ -32,7 +30,7 @@ export default async function Admin({
       <AdminConsole
         initialContent={parsed.success ? parsed.data : draft}
         initialVersion={state.version}
-        initialPublishedVersion={state.published_version}
+        initialPublishedVersion={await getPublishedVersion(state)}
         email={user.email}
       />
     );

@@ -2,7 +2,7 @@
    Base styles are always the finished state, so reduced motion, the admin motion toggle,
    and browsers without scroll-driven animations all show the page at rest. */
 
-/* Atmosphere: film grain, drifting light, and a faint blueprint grid behind the hero. */
+/* Atmosphere: film grain, drifting light, and a faint dot field behind the hero. */
 .portfolio-root {
   position: relative;
   isolation: isolate;
@@ -60,18 +60,22 @@
 .hero {
   position: relative;
 }
-.hero::before {
-  content: '';
+/* The dot field behind the hero, drawn by HeroDots. A canvas doesn't stretch between offsets,
+   so it gets an explicit full-viewport width. */
+.hero-dots {
   position: absolute;
-  inset: -86px calc(50% - 50vw) -40px;
+  top: -86px;
+  left: calc(50% - 50vw);
   z-index: -1;
+  width: 100vw;
+  height: calc(100% + 126px);
   pointer-events: none;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--fg) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--fg) 3%, transparent) 1px, transparent 1px);
-  background-size: 72px 72px;
-  background-position: center top;
-  mask-image: radial-gradient(ellipse 55% 62% at 72% 42%, #000, transparent 72%);
+  color: var(--fg);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.hero-dots[data-ready] {
+  opacity: 1;
 }
 
 /* Hero entrance */
@@ -897,5 +901,53 @@
   }
   .curtain-cover > .page-container {
     padding-bottom: 45px;
+  }
+}
+
+/* The orbit tips back like a ring seen edge-on as the page scrolls away from the hero. */
+@supports (animation-timeline: scroll()) {
+  .hero-orbit {
+    transform-origin: 50% 55%;
+    animation: orbit-recede linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 60vh;
+  }
+}
+@keyframes orbit-recede {
+  to {
+    transform: perspective(1000px) rotateX(66deg) scale(0.82);
+    /* Trails the scroll a little, so the ring lingers as it tips away. */
+    translate: 0 22%;
+    opacity: 0.2;
+  }
+}
+
+/* Repository cards type a clone command after their prompt while hovered or focused, then
+   erase it quickly. The command is monospaced, so its width in ch is its character count. */
+.repo-command {
+  width: 0;
+  min-width: 0;
+  /* Cancels the prompt's gap while the command is empty. */
+  margin-left: -3px;
+  overflow: hidden;
+  white-space: pre;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  font-size: 0.74em;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--fg) 78%, transparent);
+  transition: width calc(var(--chars) * 10ms) steps(var(--chars));
+}
+.repo-card:is(:hover, :focus-visible) .repo-command {
+  width: calc(var(--chars) * 1ch);
+  transition-duration: calc(var(--chars) * 32ms);
+}
+/* The cursor holds steady while typing, then blinks again. */
+.repo-card:is(:hover, :focus-visible) .repo-prompt i {
+  animation-name: prompt-blink-typed;
+  animation-delay: calc(var(--chars) * 32ms + 150ms);
+}
+@keyframes prompt-blink-typed {
+  50% {
+    opacity: 0;
   }
 }

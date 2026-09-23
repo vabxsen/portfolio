@@ -719,3 +719,184 @@ export function SmoothScroll() {
 
   return null;
 }
+
+const dotSpacing = 26;
+const dotSize = 1.6;
+const dotReach = 150; // Pixels around the mouse that dots move away from.
+const dotPush = 22; // Largest distance a dot moves.
+const alphaLevels = 12;
+
+type Dot = {
+  x: number;
+  y: number;
+  alpha: number;
+  dx: number;
+  dy: number;
+  vx: number;
+  vy: number;
+  glow: number;
+};
+
+// A field of faint dots behind the hero, fading out from the orbit's side like the grid it
+// replaces. Dots part around the mouse like a gravity well and spring back when it moves on.
+// Without a mouse, or with reduced motion, the field stays still.
+export function HeroDots() {
+  const reduced = useMotionPreference();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
+    const interactive = !reduced && finePointer();
+    let dots: Dot[] = [];
+    let width = 0;
+    let height = 0;
+    let pointer: { x: number; y: number } | null = null;
+    let visible = true;
+    let frame = 0;
+    let last = 0;
+    let ink = '';
+    let accent = '';
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height);
+      // Dots are grouped by opacity so each group is one fill.
+      const plain = Array.from({ length: alphaLevels }, () => [] as Dot[]);
+      const lit = Array.from({ length: alphaLevels }, () => [] as Dot[]);
+      for (const dot of dots) {
+        plain[Math.round(dot.alpha * (alphaLevels - 1))].push(dot);
+        if (dot.glow > 0.02)
+          lit[Math.min(alphaLevels - 1, Math.round(dot.glow * (alphaLevels - 1)))].push(dot);
+      }
+      const fill = (groups: Dot[][], color: string, strength: number, size: number) => {
+        context.fillStyle = color;
+        groups.forEach((group, level) => {
+          if (!level || !group.length) return;
+          context.globalAlpha = (strength * level) / (alphaLevels - 1);
+          context.beginPath();
+          for (const dot of group)
+            context.rect(dot.x + dot.dx - size / 2, dot.y + dot.dy - size / 2, size, size);
+          context.fill();
+        });
+      };
+      fill(plain, ink, 0.2, dotSize);
+      fill(lit, accent, 0.75, dotSize + 0.6);
+      context.globalAlpha = 1;
+    };
+
+    const layout = () => {
+      const style = getComputedStyle(canvas);
+      ink = style.color;
+      accent = style.getPropertyValue('--accent').trim() || ink;
+      const box = canvas.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      width = box.width;
+      height = box.height;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      dots = [];
+      const columns = Math.floor(width / dotSpacing);
+      const rows = Math.floor(height / dotSpacing);
+      const left = (width - (columns - 1) * dotSpacing) / 2;
+      const top = (height - (rows - 1) * dotSpacing) / 2;
+      for (let row = 0; row < rows; row++)
+        for (let column = 0; column < columns; column++) {
+          const x = left + column * dotSpacing;
+          const y = top + row * dotSpacing;
+          // The same soft ellipse, centered right of the middle, that masked the old grid.
+          const distance = Math.hypot(
+            (x - width * 0.72) / (width * 0.55),
+            (y - height * 0.42) / (height * 0.62),
+          );
+          const fade = Math.max(0, 1 - distance / 0.72);
+          const alpha = fade * fade * (3 - 2 * fade);
+          if (alpha > 0.04) dots.push({ x, y, alpha, dx: 0, dy: 0, vx: 0, vy: 0, glow: 0 });
+        }
+      draw();
+      canvas.dataset.ready = 'true';
+    };
+
+    const step = (now: number) => {
+      frame = 0;
+      const elapsed = last ? Math.min(Math.max((now - last) / 1000, 0), 0.05) : 1 / 60;
+      last = now;
+      const box = canvas.getBoundingClientRect();
+      const mouse = pointer ? { x: pointer.x - box.left, y: pointer.y - box.top } : null;
+      const fade = 1 - Math.exp(-elapsed / 0.12);
+      let moving = false;
+      for (const dot of dots) {
+        let targetX = 0;
+        let targetY = 0;
+        let glow = 0;
+        if (mouse) {
+          const offsetX = dot.x - mouse.x;
+          const offsetY = dot.y - mouse.y;
+          const distance = Math.hypot(offsetX, offsetY);
+          if (distance < dotReach && distance > 0.01) {
+            const pull = 1 - distance / dotReach;
+            targetX = (offsetX / distance) * pull * pull * dotPush;
+            targetY = (offsetY / distance) * pull * pull * dotPush;
+            glow = pull * dot.alpha;
+          }
+        }
+        // A slightly underdamped spring, so dots overshoot a touch as they settle.
+        dot.vx += ((targetX - dot.dx) * 170 - dot.vx * 16) * elapsed;
+        dot.vy += ((targetY - dot.dy) * 170 - dot.vy * 16) * elapsed;
+        dot.dx += dot.vx * elapsed;
+        dot.dy += dot.vy * elapsed;
+        dot.glow += (glow - dot.glow) * fade;
+        if (
+          Math.abs(targetX - dot.dx) + Math.abs(targetY - dot.dy) > 0.05 ||
+          Math.abs(dot.vx) + Math.abs(dot.vy) > 0.05 ||
+          Math.abs(glow - dot.glow) > 0.004
+        )
+          moving = true;
+      }
+      draw();
+      if (moving) frame = requestAnimationFrame(step);
+      else last = 0;
+    };
+    const start = () => {
+      if (visible && !frame) frame = requestAnimationFrame(step);
+    };
+
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      pointer = { x: event.clientX, y: event.clientY };
+      start();
+    };
+    const leave = (event: MouseEvent) => {
+      if (event.relatedTarget) return;
+      pointer = null;
+      start();
+    };
+    const scroll = () => {
+      if (pointer) start();
+    };
+    const resizer = new ResizeObserver(layout);
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) start();
+    });
+
+    resizer.observe(canvas);
+    if (interactive) {
+      observer.observe(canvas);
+      window.addEventListener('pointermove', move, { passive: true });
+      window.addEventListener('scroll', scroll, { passive: true });
+      document.addEventListener('mouseout', leave);
+    }
+    return () => {
+      cancelAnimationFrame(frame);
+      resizer.disconnect();
+      observer.disconnect();
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('scroll', scroll);
+      document.removeEventListener('mouseout', leave);
+    };
+  }, [reduced]);
+
+  return <canvas ref={canvasRef} className="hero-dots" aria-hidden="true" />;
+}

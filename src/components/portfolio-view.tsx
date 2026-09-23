@@ -16,6 +16,7 @@ import { AnimatedName, MagneticLink, MotionProvider, Reveal } from '@/components
 import {
   CustomCursor,
   DecodeLabels,
+  HeroDots,
   HeroOrbit,
   ScrollEffects,
   SmoothScroll,
@@ -35,6 +36,23 @@ function renderedBackground(hex: string) {
   if (Math.max(...channels) > 0x40) return hex;
   const halved = channels.map((channel) => Math.round(channel / 2));
   return `#${halved.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// The command a repository card types on hover, with a leading space after the prompt. Long
+// names are cut short so the command fits the card.
+function terminalCommand(url: string) {
+  let command: string;
+  try {
+    const { hostname, pathname } = new URL(url);
+    const repository = pathname.split('/').filter(Boolean).slice(0, 2).join('/');
+    command =
+      hostname === 'github.com' && repository.includes('/')
+        ? `gh repo clone ${repository}`
+        : `open ${hostname}`;
+  } catch {
+    command = 'open';
+  }
+  return ` ${command.length > 36 ? `${command.slice(0, 35)}…` : command}`;
 }
 
 export function PortfolioView({ content }: { content: Content }) {
@@ -92,6 +110,7 @@ export function PortfolioView({ content }: { content: Content }) {
             </div>
             <div className="page-container">
               <section className="hero" aria-labelledby="hero-title">
+                <HeroDots />
                 <div className="hero-grid">
                   <div className="hero-copy">
                     <div className="hero-eyebrow hero-enter" style={delay(0)}>
@@ -113,14 +132,16 @@ export function PortfolioView({ content }: { content: Content }) {
                           View my work <ArrowDown size={16} />
                         </MagneticLink>
                       )}
-                      <a
-                        className="button button-secondary"
-                        href={profile.github || '#opensource'}
-                        target={profile.github ? '_blank' : undefined}
-                        rel="noopener noreferrer"
-                      >
-                        <Github size={16} /> GitHub <ArrowUpRight size={14} />
-                      </a>
+                      {profile.github && (
+                        <a
+                          className="button button-secondary"
+                          href={profile.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Github size={16} /> GitHub <ArrowUpRight size={14} />
+                        </a>
+                      )}
                       {sections.contact && (
                         <a className="hero-contact" href="#contact">
                           Contact <ArrowUpRight size={15} />
@@ -266,18 +287,20 @@ export function PortfolioView({ content }: { content: Content }) {
                         />
                       </h2>
                     </div>
-                    <a
-                      className="button button-secondary scroll-fade"
-                      href={profile.github || '#contact'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Github size={16} />{' '}
-                      {profile.github
-                        ? new URL(profile.github).pathname.replace('/', '@')
-                        : 'GitHub'}{' '}
-                      <ArrowUpRight size={14} />
-                    </a>
+                    {profile.github && (
+                      <a
+                        className="button button-secondary scroll-fade"
+                        href={profile.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Github size={16} />{' '}
+                        {profile.github
+                          ? new URL(profile.github).pathname.replace('/', '@')
+                          : 'GitHub'}{' '}
+                        <ArrowUpRight size={14} />
+                      </a>
+                    )}
                   </div>
                   <p className="open-intro scroll-fade">{copy.openSource.description}</p>
                   <Reveal>
@@ -291,8 +314,15 @@ export function PortfolioView({ content }: { content: Content }) {
                           rel="noopener noreferrer"
                         >
                           <div className="repo-top">
-                            <span className="repo-prompt" aria-hidden="true">
+                            <span
+                              className="repo-prompt"
+                              aria-hidden="true"
+                              style={
+                                { '--chars': terminalCommand(repo.url).length } as CSSProperties
+                              }
+                            >
                               &gt;
+                              <span className="repo-command">{terminalCommand(repo.url)}</span>
                               <i />
                             </span>
                             <ArrowUpRight size={17} />
@@ -309,13 +339,19 @@ export function PortfolioView({ content }: { content: Content }) {
                     <div className="github-note">
                       <GitPullRequest size={15} />
                       <span>{copy.openSource.note}</span>
-                      <a
-                        href={profile.github ? `${profile.github}?tab=repositories` : '#contact'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        All repositories <ArrowRight size={15} />
-                      </a>
+                      {profile.github && (
+                        <a
+                          href={(() => {
+                            const url = new URL(profile.github);
+                            url.searchParams.set('tab', 'repositories');
+                            return url.href;
+                          })()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          All repositories <ArrowRight size={15} />
+                        </a>
+                      )}
                     </div>
                   </Reveal>
                 </section>
@@ -374,9 +410,11 @@ export function PortfolioView({ content }: { content: Content }) {
           </p>
           <nav aria-label="Footer navigation">
             {sections.work && <a href="#work">Work</a>}
-            <a href={profile.github || '#opensource'} target="_blank" rel="noopener noreferrer">
-              GitHub <ArrowUpRight size={12} />
-            </a>
+            {profile.github && (
+              <a href={profile.github} target="_blank" rel="noopener noreferrer">
+                GitHub <ArrowUpRight size={12} />
+              </a>
+            )}
             {profile.linkedin && (
               <a href={profile.linkedin} target="_blank" rel="noopener noreferrer">
                 LinkedIn <ArrowUpRight size={12} />

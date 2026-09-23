@@ -297,6 +297,22 @@ export function ProjectPreview({ project }: { project: Project }) {
         </div>
       </div>
     );
+  if (project.slug !== 'native-ai')
+    return (
+      <div className="mock-window" aria-hidden="true">
+        <MockBar name={project.name} />
+        <div className="mock-main">
+          <span className="mock-kicker">{project.category}</span>
+          <h4>{project.name}</h4>
+          <p>{project.description}</p>
+          <div className="mock-pills">
+            {project.technologies.slice(0, 3).map((technology) => (
+              <span key={technology}>{technology}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   return (
     <div className="mock-window native-window" aria-hidden="true">
       <MockBar name="Native AI" />

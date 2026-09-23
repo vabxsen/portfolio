@@ -213,6 +213,13 @@ export async function getPublished(): Promise<Content> {
   }
 }
 
+// The public record is written separately. If that write failed after the draft
+// was marked published, keep the editor's Publish button available for retry.
+export async function getPublishedVersion(state: StoredState): Promise<number> {
+  const published = await readRecord<PublishedRecord>(PUBLISHED_KEY);
+  return published?.value.version ?? state.published_version;
+}
+
 export async function saveDraft(content: Content, version: number) {
   const serialized = JSON.stringify(content);
   const result = await mutateRecord<StoredState>(STATE_KEY, (current) => {
