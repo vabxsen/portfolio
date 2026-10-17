@@ -11,6 +11,7 @@ import './globals.css';
 import './interactions.css';
 import './motion-graphics.css';
 import './showcase.css';
+import './composition.css';
 import './admin.css';
 export const metadata: Metadata = {
   title: { default: 'Vaibhav Sen — Developer & UI/UX Designer', template: '%s — Vaibhav Sen' },

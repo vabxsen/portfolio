@@ -348,7 +348,7 @@ export function TiltStages() {
 }
 
 const snapTargets =
-  '.button, .nav-contact, .hero-contact, .project-link, .contact-orb, .desktop-nav a, .menu-toggle';
+  '.button, .nav-contact, .project-link, .contact-orb, .desktop-nav a, .menu-toggle';
 const cursorLag = { stiffness: 520, damping: 42, mass: 0.45 };
 const cursorGrow = { stiffness: 360, damping: 30 };
 
@@ -475,7 +475,6 @@ export function ScrollEffects() {
     const curtain = layer?.closest<HTMLElement>('.curtain');
     if (!layer || !curtain) return;
     const chapters = [...curtain.querySelectorAll<HTMLElement>('.chapter')];
-    const counter = curtain.querySelector<HTMLElement>('.chapter-counter');
     const cover = curtain.querySelector<HTMLElement>('.curtain-cover');
     const stage = curtain.querySelector<HTMLElement>('.curtain-stage');
     let frame = 0;
@@ -492,27 +491,14 @@ export function ScrollEffects() {
       const middle = window.innerHeight / 2;
       let accent = '';
       let strength = 0;
-      let nearest = 0;
-      let nearestDistance = Infinity;
-      chapters.forEach((chapter, index) => {
+      for (const chapter of chapters) {
         const box = chapter.getBoundingClientRect();
         const distance = Math.abs(box.top + box.height / 2 - middle);
         const score = 1 - Math.min(distance / (box.height / 2 + middle * 0.6), 1);
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          nearest = index;
-        }
         if (score > strength) {
           strength = score;
           accent = chapter.style.getPropertyValue('--project-accent');
         }
-      });
-      if (counter && chapters.length) {
-        counter.style.setProperty('--current', String(nearest));
-        counter.style.setProperty(
-          '--counter-accent',
-          chapters[nearest].style.getPropertyValue('--project-accent'),
-        );
       }
       if (!reduced) {
         if (accent) layer.style.setProperty('--tint', accent);
@@ -562,7 +548,7 @@ export function ScrollEffects() {
 
 // Only labels hidden from assistive technology scramble, so screen readers never meet the
 // half-decoded text, and the effect stays an accent on the project stages.
-const decodeTargets = '.chapter-rule > span, .stage-label';
+const decodeTargets = '.stage-label';
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const symbols = '#%&*+=/<>';
 const pick = (set: string) => set[Math.floor(Math.random() * set.length)];

@@ -302,9 +302,6 @@ button {
 .mobile-nav {
   display: none;
 }
-.hero {
-  padding-top: 85px;
-}
 .hero-eyebrow {
   display: flex;
   gap: 13px;
@@ -347,12 +344,6 @@ h1 em {
 }
 .mobile-break {
   display: none;
-}
-.hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
-  align-items: center;
-  gap: 32px;
 }
 .hero-intro {
   color: var(--muted);
@@ -398,51 +389,6 @@ h1 em {
   border-color: #8c806c;
   background: #1c1b19;
 }
-.hero-contact {
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 15px;
-}
-.hero-visual {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 20px;
-}
-.hero-captions {
-  text-align: right;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  line-height: 1.9;
-  color: var(--quiet);
-}
-.hero-captions span {
-  display: block;
-}
-.hero-footnote {
-  margin-top: 56px;
-  padding: 19px 0;
-  border-top: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-  color: var(--quiet);
-  font-family: var(--font-label);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  font-size: 11px;
-}
-.hero-footnote a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.work-section {
-  padding-top: 73px;
-}
 .section-label {
   display: flex;
   align-items: center;
@@ -481,17 +427,6 @@ h2 span {
   color: var(--muted);
   line-height: 1.6;
   margin-bottom: 4px;
-}
-.work-caption {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 43px;
-  margin-bottom: 16px;
-  font-family: var(--font-label);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--quiet);
-  font-size: 11px;
 }
 .project-visual {
   height: 360px;
@@ -1358,12 +1293,6 @@ h2 span {
   transform: translateY(0);
 }
 @media (min-width: 1450px) {
-  .hero {
-    padding-top: 101px;
-  }
-  .hero-footnote {
-    margin-top: 83px;
-  }
   .project-visual {
     height: 385px;
   }
@@ -1504,9 +1433,6 @@ h2 span {
   .mobile-nav a svg {
     color: var(--quiet);
   }
-  .hero {
-    padding-top: 56px;
-  }
   .hero-eyebrow {
     font-size: 9px;
     letter-spacing: 0.05em;
@@ -1541,23 +1467,6 @@ h2 span {
     font-size: 14px;
     gap: 8px;
   }
-  .hero-contact {
-    padding: 11px 7px;
-    font-size: 13px;
-    gap: 6px;
-  }
-  .hero-footnote {
-    margin-top: 45px;
-    font-size: 9px;
-    letter-spacing: 0.03em;
-    padding: 17px 0;
-  }
-  .hero-footnote a {
-    gap: 5px;
-  }
-  .work-section {
-    padding-top: 47px;
-  }
   .section-label {
     font-size: 10px;
     letter-spacing: 0.06em;
@@ -1567,22 +1476,6 @@ h2 span {
   .section-label > span {
     font-size: 10px;
     padding-right: 10px;
-  }
-  .section-heading {
-    gap: 22px;
-  }
-  .section-heading h2 {
-    font-size: 2.8rem;
-  }
-  .section-heading > p {
-    font-size: 12px;
-    max-width: 142px;
-    line-height: 1.8;
-  }
-  .work-caption {
-    font-size: 8px;
-    margin-top: 28px;
-    letter-spacing: 0.04em;
   }
   .project-visual {
     height: 340px;
@@ -1780,10 +1673,7 @@ h2 span {
 }
 @media (max-width: 375px) {
   .hero-actions {
-    gap: 5px;
-  }
-  .hero-contact {
-    font-size: 13px;
+    gap: 8px;
   }
   .hero-actions .button {
     font-size: 13px;
@@ -1862,26 +1752,18 @@ h2 span {
 .repo-card > p,
 .footer nav,
 .nav-contact,
-.hero-contact,
 .github-note {
   font-size: 0.875rem;
 }
 .stack-group li,
 .repo-meta,
-.work-caption,
 .section-label,
 .section-label > span,
 .hero-eyebrow,
-.hero-footnote,
 .timeline-period,
 .timeline-organization,
-.stack-header > span,
 .footer p {
   font-size: 0.75rem;
-}
-.hero-footnote {
-  gap: 16px;
-  flex-wrap: wrap;
 }
 .hero-eyebrow {
   line-height: 1.6;
@@ -1896,29 +1778,10 @@ h2 span {
   max-width: 450px;
 }
 @media (max-width: 700px) {
-  .section-heading {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .section-heading > p {
-    max-width: 290px;
-    font-size: 1rem;
-  }
   /* Labels never drop below 12px; long ones wrap instead. */
   .hero-eyebrow {
     font-size: 0.75rem;
     letter-spacing: 0.06em;
-  }
-  .hero-footnote {
-    font-size: 0.75rem;
-  }
-  .hero-footnote a {
-    font-size: inherit;
-  }
-  .work-caption {
-    font-size: 0.75rem;
-    gap: 14px;
   }
   .timeline-period {
     font-size: 0.75rem;
@@ -1931,9 +1794,6 @@ h2 span {
   .email-link {
     font-size: 0.875rem;
   }
-  .hero-contact {
-    min-height: 44px;
-  }
   .section-description {
     max-width: 320px;
   }
@@ -1941,14 +1801,11 @@ h2 span {
 
 /* Inline text links keep their visual size but get a 44px tall hit area. */
 .text-link,
-.hero-contact,
-.hero-footnote a,
 .github-note > a,
 .email-link {
   position: relative;
 }
 .text-link::after,
-.hero-footnote a::after,
 .github-note > a::after,
 .email-link::after {
   content: '';

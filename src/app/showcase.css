@@ -1,71 +1,59 @@
-/* Project showcase: featured projects as chapters, the rest as an index.
-   Each project's accent color tints its own stage, rule, tagline, and links. */
+/* Project showcase: featured projects as full-width tiles, the rest as an index.
+   Each project's accent color tints its own tile, tagline, and links. */
 
-.work-caption {
-  margin-top: 56px;
-  margin-bottom: 0;
-}
-
-/* Chapters */
+/* Showcase tiles: centered copy above, the preview rising from the tile's bottom edge. */
 .chapters {
   display: grid;
-  gap: 128px;
-  margin-top: 40px;
+  gap: 28px;
+  margin-top: 72px;
 }
 .chapter {
+  position: relative;
+  overflow: hidden;
   container-type: inline-size;
+  padding-top: 96px;
+  border: 1px solid color-mix(in srgb, var(--project-accent) 18%, var(--line));
+  border-radius: 32px;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 100%,
+    color-mix(in srgb, var(--project-accent) 24%, #0c0c0b),
+    color-mix(in srgb, var(--project-accent) 5%, #0a0a09) 72%
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fg) 7%, transparent);
+  text-align: center;
 }
-.chapter-rule {
+.chapter-copy {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 30px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--quiet);
+  max-width: 760px;
+  margin-inline: auto;
+  padding-inline: 32px;
 }
-.chapter-rule > span:first-child {
-  color: color-mix(in srgb, var(--project-accent) 80%, var(--fg));
+.chapter-stage {
+  display: flex;
+  justify-content: center;
+  margin-top: 64px;
 }
-.chapter-rule i {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--project-accent) 65%, transparent),
-    var(--line) 70%
-  );
-  transform-origin: left;
+.chapter-stage .stage-link,
+.chapter-stage > .project-visual {
+  display: block;
+  width: min(100%, 720px);
 }
-.chapter:nth-child(even) .chapter-rule {
-  flex-direction: row-reverse;
+/* The tile is the stage, so the preview drops its own frame and spills to the tile's edge. */
+.chapter-stage .project-visual {
+  height: 400px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  transition: translate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.chapter:nth-child(even) .chapter-rule i {
-  transform-origin: right;
-  background: linear-gradient(
-    270deg,
-    color-mix(in srgb, var(--project-accent) 65%, transparent),
-    var(--line) 70%
-  );
-}
-.chapter-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
-  align-items: center;
-  gap: 64px;
-}
-.chapter:nth-child(even) .chapter-body {
-  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
-}
-.chapter:nth-child(even) .chapter-stage {
-  order: 2;
+.chapter.screenshot-card .chapter-stage .project-visual {
+  height: 540px;
 }
 
-/* The stage every preview sits on, shared by chapters and the index. */
-.chapter-stage .project-visual,
+/* The stage the index previews sit on. */
 .index-inline-preview .project-visual,
 .index-float-item .project-visual {
   border: 1px solid color-mix(in srgb, var(--project-accent) 22%, var(--line));
@@ -74,19 +62,6 @@
     color-mix(in srgb, var(--project-accent) 22%, #0c0c0b),
     color-mix(in srgb, var(--project-accent) 6%, #090908) 72%
   );
-}
-.chapter-stage .project-visual {
-  height: 480px;
-  border-radius: 22px;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent),
-    0 40px 80px -40px rgb(0 0 0 / 70%);
-  transition:
-    translate 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s;
-}
-.chapter.screenshot-card .chapter-stage .project-visual {
-  height: 580px;
 }
 .stage-label {
   position: absolute;
@@ -106,18 +81,29 @@
   text-transform: uppercase;
   color: color-mix(in srgb, var(--fg) 78%, transparent);
 }
+.chapter > .stage-label {
+  top: 24px;
+  left: 24px;
+}
 .chapter-copy h3 {
-  font-size: clamp(2.8rem, 5vw, 4.4rem);
+  font-size: clamp(3rem, 7vw, 5.75rem);
   font-weight: 500;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.05em;
   line-height: 1;
 }
 .chapter-tagline {
-  margin-top: 16px;
-  font-size: clamp(1.15rem, 1.6vw, 1.35rem);
+  margin-top: 18px;
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
   letter-spacing: -0.02em;
   line-height: 1.4;
   color: color-mix(in srgb, var(--project-accent) 72%, var(--fg));
+}
+.chapter-description {
+  max-width: 600px;
+}
+.chapter-tech,
+.chapter .project-links {
+  justify-content: center;
 }
 .chapter-description,
 .index-details-copy > p {
@@ -389,10 +375,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .chapter-stage:hover .project-visual {
-    translate: 0 -6px;
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent),
-      0 50px 90px -40px color-mix(in srgb, var(--project-accent) 40%, transparent);
+    translate: 0 -8px;
   }
   .chapter-stage:hover .mock-window {
     transform: translateY(11px);
@@ -429,11 +412,6 @@
 }
 
 @supports (animation-timeline: view()) {
-  .chapter-rule i {
-    animation: rule-draw linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 40%;
-  }
   .chapter-stage {
     animation: stage-rise linear both;
     animation-timeline: view();
@@ -445,11 +423,6 @@
     animation-range: entry 0% entry 100%;
   }
 }
-@keyframes rule-draw {
-  from {
-    scale: 0 1;
-  }
-}
 @keyframes stage-rise {
   from {
     opacity: 0;
@@ -459,22 +432,12 @@
 }
 
 @media (max-width: 1000px) {
-  .chapters {
-    gap: 96px;
+  .chapter {
+    padding-top: 80px;
+    border-radius: 28px;
   }
-  .chapter-body,
-  .chapter:nth-child(even) .chapter-body {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
-  }
-  .chapter:nth-child(even) .chapter-stage {
-    order: 0;
-  }
-  .chapter:nth-child(even) .chapter-rule {
-    flex-direction: row;
-  }
-  .chapter:nth-child(even) .chapter-rule i {
-    transform-origin: left;
+  .chapter-stage {
+    margin-top: 48px;
   }
   .index-row > summary {
     grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1.2fr) 34px;
@@ -487,22 +450,36 @@
   }
 }
 @media (max-width: 700px) {
-  .work-caption {
-    margin-top: 36px;
-  }
   .chapters {
-    gap: 80px;
-    margin-top: 28px;
+    gap: 16px;
+    margin-top: 48px;
   }
-  .chapter-rule {
-    margin-bottom: 20px;
+  .chapter {
+    padding-top: 64px;
+    border-radius: 24px;
+  }
+  .chapter > .stage-label {
+    top: 16px;
+    left: 16px;
+  }
+  .chapter-copy {
+    padding-inline: 20px;
+  }
+  .chapter-copy h3 {
+    font-size: clamp(2.75rem, 13vw, 3.5rem);
+  }
+  .chapter-stage {
+    margin-top: 40px;
+  }
+  .chapter-stage .stage-link,
+  .chapter-stage > .project-visual {
+    width: 100%;
   }
   .chapter-stage .project-visual {
     height: 360px;
-    border-radius: 18px;
   }
   .chapter.screenshot-card .chapter-stage .project-visual {
-    height: 520px;
+    height: 500px;
   }
   .project-index {
     margin-top: 96px;
@@ -528,71 +505,6 @@
   }
   .index-inline-preview .project-visual {
     height: 320px;
-  }
-}
-
-/* Chapter counter: pinned in the left margin while the featured chapters pass, rolling to
-   the number of the chapter nearest the middle of the screen. */
-.chapters {
-  position: relative;
-}
-.chapter-counter {
-  position: absolute;
-  inset-block: 0;
-  /* The middle of the page margin, measured from the container's left edge. */
-  left: calc((100% - 100vw) / 4);
-  width: 0;
-  pointer-events: none;
-}
-.counter-pin {
-  position: sticky;
-  top: calc(50vh - 3rem);
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  width: max-content;
-  translate: -50% 0;
-}
-.counter-window {
-  display: block;
-  height: 1em;
-  overflow: clip;
-  /* Scales with the margin so it keeps clear of the chapter text on narrower screens. */
-  font-size: clamp(2rem, (100vw - 1184px) / 5, 3.3rem);
-  font-weight: 300;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-  color: color-mix(in srgb, var(--counter-accent) 85%, var(--fg));
-  transition: color 0.6s;
-}
-.counter-reel {
-  display: flex;
-  flex-direction: column;
-  translate: 0 calc(var(--current, 0) * -1em);
-  transition: translate 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.counter-reel > span {
-  height: 1em;
-}
-.counter-total {
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  color: var(--quiet);
-}
-.counter-pin::after {
-  content: '';
-  width: 1px;
-  height: 72px;
-  background: linear-gradient(var(--counter-accent), transparent);
-  opacity: 0.6;
-}
-/* Hidden when the margin is too narrow to hold it. */
-@media (max-width: 1339px) {
-  .chapter-counter {
-    display: none;
   }
 }
 

@@ -110,69 +110,51 @@ export function PortfolioView({ content }: { content: Content }) {
               <span />
             </div>
             <div className="page-container">
+              {/* One centered column; the orbit circles behind it as quiet atmosphere. */}
               <section className="hero" aria-labelledby="hero-title">
                 <HeroDots />
-                <div className="hero-grid">
-                  <div className="hero-copy">
-                    <div className="hero-eyebrow hero-enter" style={delay(0)}>
-                      <span className="eyebrow-line" /> {copy.heroEyebrow}
-                    </div>
-                    <h1 id="hero-title">
-                      <AnimatedName name={profile.name} />
-                      <span className="hero-enter" style={delay(420)}>
-                        {profile.role}
-                        <span className="hero-period">.</span>
-                      </span>
-                    </h1>
-                    <p className="hero-intro hero-enter" style={delay(560)}>
-                      {profile.introduction}
-                    </p>
-                    <div className="hero-actions hero-enter" style={delay(680)}>
-                      {sections.work && (
-                        <MagneticLink className="button button-primary" href="#work">
-                          View my work <ArrowDown size={16} />
-                        </MagneticLink>
-                      )}
-                      {profile.github && (
-                        <a
-                          className="button button-secondary"
-                          href={profile.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Github size={16} /> GitHub <ArrowUpRight size={14} />
-                        </a>
-                      )}
-                      {sections.contact && (
-                        <a className="hero-contact" href="#contact">
-                          Contact <ArrowUpRight size={15} />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <div className="hero-visual hero-enter" style={delay(260)}>
-                    <HeroOrbit platforms={platforms} projects={orbitProjects} />
-                    <div className="hero-captions">
-                      <span>{copy.heroSide[0]}</span>
-                      <span>{copy.heroSide[1]}</span>
-                    </div>
-                  </div>
+                <div className="hero-visual hero-enter" style={delay(260)}>
+                  <HeroOrbit platforms={platforms} projects={orbitProjects} />
                 </div>
-                <div className="hero-footnote hero-enter" style={delay(820)}>
-                  <span>{copy.platforms}</span>
-                  {sections.work && (
-                    <a href="#work">
-                      SCROLL TO EXPLORE <ArrowDown size={12} />
-                    </a>
-                  )}
+                <div className="hero-copy">
+                  <div className="hero-eyebrow hero-enter" style={delay(0)}>
+                    <span className="eyebrow-line" />
+                    {copy.heroEyebrow}
+                    <span className="eyebrow-line" />
+                  </div>
+                  <h1 id="hero-title">
+                    <AnimatedName name={profile.name} />
+                    <span className="hero-enter" style={delay(420)}>
+                      {profile.role}
+                      <span className="hero-period">.</span>
+                    </span>
+                  </h1>
+                  <p className="hero-intro hero-enter" style={delay(560)}>
+                    {profile.introduction}
+                  </p>
+                  <div className="hero-actions hero-enter" style={delay(680)}>
+                    {sections.work && (
+                      <MagneticLink className="button button-primary" href="#work">
+                        View my work <ArrowDown size={16} />
+                      </MagneticLink>
+                    )}
+                    {profile.github && (
+                      <a
+                        className="button button-secondary"
+                        href={profile.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Github size={16} /> GitHub <ArrowUpRight size={14} />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </section>
               {sections.about && <TechMarquee items={tools} />}
               {sections.work && (
                 <section id="work" className="work-section" aria-labelledby="work-heading">
                   <SectionHeading
-                    number="01"
-                    label={copy.work.label}
                     lines={[copy.work.title[0], <span>{copy.work.title[1]}</span>]}
                     description={copy.work.description}
                   />
@@ -191,7 +173,6 @@ export function PortfolioView({ content }: { content: Content }) {
                 >
                   <div className="about-grid">
                     <div>
-                      <SectionLabel number="02" label={copy.about.label} />
                       <h2 id="about-heading">
                         <RevealLines
                           lines={[copy.about.title[0], <span>{copy.about.title[1]}</span>]}
@@ -220,7 +201,6 @@ export function PortfolioView({ content }: { content: Content }) {
                   <Reveal>
                     <div className="stack-header">
                       <h3>{copy.stack.title}</h3>
-                      <span>{copy.stack.note}</span>
                     </div>
                     <div className="stack-grid">
                       {stack.map((group) => (
@@ -246,7 +226,6 @@ export function PortfolioView({ content }: { content: Content }) {
                 >
                   <div className="journey-grid">
                     <div className="journey-intro">
-                      <SectionLabel number="03" label={copy.journey.label} />
                       <h2 id="journey-heading">
                         <RevealLines
                           lines={[copy.journey.title[0], <span>{copy.journey.title[1]}</span>]}
@@ -278,7 +257,6 @@ export function PortfolioView({ content }: { content: Content }) {
                 >
                   <div className="opensource-header">
                     <div>
-                      <SectionLabel number="04" label={copy.openSource.label} />
                       <h2 id="opensource-heading">
                         <RevealLines
                           lines={[
@@ -366,7 +344,6 @@ export function PortfolioView({ content }: { content: Content }) {
                 className="contact-section section-space page-container"
                 aria-labelledby="contact-heading"
               >
-                <SectionLabel number="05" label={copy.contact.label} />
                 <div className="contact-title">
                   <h2 id="contact-heading">
                     <RevealLines
@@ -432,33 +409,12 @@ export function PortfolioView({ content }: { content: Content }) {
     </div>
   );
 }
-function SectionLabel({ number, label }: { number: string; label: string }) {
-  return (
-    <p className="section-label scroll-fade">
-      <span>{number}</span>
-      {label}
-    </p>
-  );
-}
-function SectionHeading({
-  number,
-  label,
-  lines,
-  description,
-}: {
-  number: string;
-  label: string;
-  lines: ReactNode[];
-  description: string;
-}) {
+function SectionHeading({ lines, description }: { lines: ReactNode[]; description: string }) {
   return (
     <div className="section-heading">
-      <div>
-        <SectionLabel number={number} label={label} />
-        <h2 id="work-heading">
-          <RevealLines lines={lines} />
-        </h2>
-      </div>
+      <h2 id="work-heading">
+        <RevealLines lines={lines} />
+      </h2>
       <p className="scroll-fade">{description}</p>
     </div>
   );

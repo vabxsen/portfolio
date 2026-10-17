@@ -45,7 +45,6 @@ h1 > .hero-name {
 }
 .button svg,
 .nav-contact svg,
-.hero-contact svg,
 .text-link svg,
 .email-link svg,
 .repo-top > svg:last-child {
@@ -107,7 +106,6 @@ h1 > .hero-name {
     transform: translateY(3px);
   }
   .nav-contact:hover svg,
-  .hero-contact:hover svg,
   .text-link:hover svg,
   .email-link:hover svg:last-child,
   .repo-card:hover .repo-top > svg:last-child {
@@ -208,7 +206,6 @@ h1 > .hero-name {
   }
   .button svg,
   .nav-contact svg,
-  .hero-contact svg,
   .text-link svg,
   .email-link svg,
   .repo-top > svg:last-child,
