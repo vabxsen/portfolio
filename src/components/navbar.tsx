@@ -56,11 +56,17 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
     const outside = (event: PointerEvent) => {
       if (!header.current?.contains(event.target as Node)) setOpen(false);
     };
-    // The open menu covers the screen, so the page behind it stays put. Widening past the
+    // The open menu covers the screen, so the page behind it stays put and leaves the tab
+    // order: keyboard focus can't land on links hidden under the sheet. Widening past the
     // phone layout hides the toggle, so the menu closes rather than leaving the page locked.
     const root = document.documentElement;
     const overflow = root.style.overflow;
     root.style.overflow = 'hidden';
+    const page = [...(header.current?.parentElement?.children ?? [])].filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && element !== header.current && !element.inert,
+    );
+    for (const element of page) element.inert = true;
     const wide = window.matchMedia('(min-width: 701px)');
     const widen = () => wide.matches && setOpen(false);
     document.addEventListener('keydown', close);
@@ -68,6 +74,7 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
     wide.addEventListener('change', widen);
     return () => {
       root.style.overflow = overflow;
+      for (const element of page) element.inert = false;
       document.removeEventListener('keydown', close);
       document.removeEventListener('pointerdown', outside);
       wide.removeEventListener('change', widen);
