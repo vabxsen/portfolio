@@ -9,7 +9,8 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
   const visibleNavigation = navigation.filter((item) => sections[item.href.slice(1)]);
   const sectionLinks = [
     ...visibleNavigation,
-    ...(sections.opensource ? [{ label: 'GitHub', href: '#opensource' }] : []),
+    // Named for the section it scrolls to; "GitHub" elsewhere always opens github.com.
+    ...(sections.opensource ? [{ label: 'Open Source', href: '#opensource' }] : []),
   ];
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -24,9 +25,17 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
     return () => window.removeEventListener('scroll', update);
   }, []);
   useEffect(() => {
+    // The highlight follows the first section in the reading band and clears in the hero and
+    // contact areas, so it never sticks to a section after a jump past it.
+    const visible = new Set<string>();
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) if (entry.isIntersecting) setActive('#' + entry.target.id);
+        for (const entry of entries) {
+          const href = '#' + entry.target.id;
+          if (entry.isIntersecting) visible.add(href);
+          else visible.delete(href);
+        }
+        setActive(sectionLinks.find((item) => visible.has(item.href))?.href ?? '');
       },
       { rootMargin: '-15% 0px -55% 0px' },
     );
@@ -47,11 +56,21 @@ export function Navbar({ sections, name }: { sections: Record<string, boolean>; 
     const outside = (event: PointerEvent) => {
       if (!header.current?.contains(event.target as Node)) setOpen(false);
     };
+    // The open menu covers the screen, so the page behind it stays put. Widening past the
+    // phone layout hides the toggle, so the menu closes rather than leaving the page locked.
+    const root = document.documentElement;
+    const overflow = root.style.overflow;
+    root.style.overflow = 'hidden';
+    const wide = window.matchMedia('(min-width: 701px)');
+    const widen = () => wide.matches && setOpen(false);
     document.addEventListener('keydown', close);
     document.addEventListener('pointerdown', outside);
+    wide.addEventListener('change', widen);
     return () => {
+      root.style.overflow = overflow;
       document.removeEventListener('keydown', close);
       document.removeEventListener('pointerdown', outside);
+      wide.removeEventListener('change', widen);
     };
   }, [open]);
   return (

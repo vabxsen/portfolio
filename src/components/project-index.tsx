@@ -96,7 +96,7 @@ export function ProjectIndex({
                   className={`index-inline-preview${hasScreenshots(project) ? ' screenshot-card' : ''}`}
                 >
                   <div className="project-visual">
-                    <span className="stage-label">
+                    <span className="stage-label" aria-hidden="true">
                       {hasScreenshots(project) ? 'Product screenshots' : 'Interface study'}
                     </span>
                     <ProjectPreview project={project} />

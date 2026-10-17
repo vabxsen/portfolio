@@ -517,7 +517,7 @@
 .stack-group {
   padding: 24px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--fg) 2%, transparent);
   transition: border-color 0.35s;
 }
@@ -525,7 +525,7 @@
   border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
 }
 .repo-card {
-  border-radius: 12px;
+  border-radius: var(--radius-card);
 }
 .repo-prompt {
   display: inline-flex;
@@ -641,11 +641,12 @@
   }
 }
 @media (max-width: 700px) {
+  /* Raised and pushed aside so the orbit frames the eyebrow instead of crossing the name. */
   .hero-visual {
-    top: -30px;
-    right: -175px;
+    top: -150px;
+    right: -190px;
     width: 340px;
-    opacity: 0.4;
+    opacity: 0.35;
   }
   .ambient > span:first-child {
     width: 520px;

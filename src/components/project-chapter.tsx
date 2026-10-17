@@ -9,7 +9,9 @@ export function ProjectChapter({ project, index }: { project: Project; index: nu
   const href = project.demo || project.github;
   const visual = (
     <div className="project-visual">
-      <span className="stage-label">{screenshots ? 'Product screenshots' : 'Interface study'}</span>
+      <span className="stage-label" aria-hidden="true">
+        {screenshots ? 'Product screenshots' : 'Interface study'}
+      </span>
       <ProjectPreview project={project} />
       <span className="stage-glare" aria-hidden="true" />
     </div>

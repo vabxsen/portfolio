@@ -142,10 +142,16 @@
   --panel: #161616;
   --fg: #eeeae3;
   --muted: #9a9995;
-  --quiet: #787875;
+  /* Tertiary text: stays above 4.5:1 on the page, on cards, and in the mobile menu. */
+  --quiet: #8c8b86;
   --line: #2a2a28;
   --accent: #d4bc94;
   --font-label: var(--font-manrope), Arial, Helvetica, sans-serif;
+  /* One radius per role: controls are pills, cards share a corner, stages stay larger. */
+  --radius-pill: 999px;
+  --radius-card: 16px;
+  /* Whitespace, rather than rules, separates the page's sections. */
+  --section-gap: clamp(104px, 12vw, 168px);
   color-scheme: dark;
 }
 * {
@@ -247,6 +253,8 @@ button {
   font-size: 30px;
   line-height: 1;
   display: inline-block;
+  /* A 44px tall target without changing the mark's size. */
+  padding-block: 7px;
 }
 .wordmark span {
   color: var(--accent);
@@ -279,11 +287,12 @@ button {
 }
 .nav-contact {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   align-items: center;
+  min-height: 44px;
   border: 1px solid #41413d;
-  padding: 9px 17px;
-  border-radius: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
   font-size: 14px;
 }
 .nav-contact:hover {
@@ -315,7 +324,7 @@ button {
 h1 {
   font-size: clamp(4rem, 7.8vw, 6.35rem);
   font-weight: 500;
-  letter-spacing: -0.068em;
+  letter-spacing: -0.05em;
   line-height: 1.05;
 }
 h1 > span {
@@ -347,26 +356,27 @@ h1 em {
 }
 .hero-intro {
   color: var(--muted);
-  max-width: 500px;
-  font-size: 17px;
-  line-height: 1.8;
-  margin-top: 30px;
+  max-width: 520px;
+  font-size: 19px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  margin-top: 28px;
 }
 .hero-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 30px;
+  margin-top: 36px;
 }
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 13px;
+  gap: 10px;
   min-height: 44px;
-  border-radius: 5px;
-  padding: 11px 19px;
-  font-size: 14px;
+  border-radius: var(--radius-pill);
+  padding: 11px 22px;
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -453,7 +463,7 @@ h1 em {
 h2 {
   font-weight: 400;
   font-size: clamp(2.35rem, 4.6vw, 3.75rem);
-  letter-spacing: -0.052em;
+  letter-spacing: -0.04em;
   line-height: 1.1;
 }
 h2 span {
@@ -466,10 +476,10 @@ h2 span {
   gap: 40px;
 }
 .section-heading > p {
-  max-width: 280px;
-  font-size: 15px;
+  max-width: 320px;
+  font-size: 17px;
   color: var(--muted);
-  line-height: 1.75;
+  line-height: 1.6;
   margin-bottom: 4px;
 }
 .work-caption {
@@ -973,9 +983,7 @@ h2 span {
   color: #9da5b4;
 }
 .section-space {
-  padding-top: 107px;
-  margin-top: 106px;
-  border-top: 1px solid var(--line);
+  padding-top: var(--section-gap);
 }
 .about-grid {
   display: grid;
@@ -1003,16 +1011,16 @@ h2 span {
   padding-top: 38px;
 }
 .about-copy > p:first-child {
-  font-size: 19px;
-  line-height: 1.75;
+  font-size: 21px;
+  line-height: 1.55;
   letter-spacing: -0.015em;
   color: #cecbc3;
 }
 .about-copy > p:nth-child(2) {
   color: var(--muted);
   font-size: 15px;
-  line-height: 1.8;
-  margin-top: 22px;
+  line-height: 1.7;
+  margin-top: 24px;
 }
 .text-link {
   display: inline-flex;
@@ -1070,8 +1078,8 @@ h2 span {
 }
 .stack-group li {
   border: 1px solid #343431;
-  padding: 6px 10px;
-  border-radius: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   color: #bbb8b0;
   background: #181817;
@@ -1084,8 +1092,8 @@ h2 span {
 .section-description {
   font-size: 15px;
   color: var(--muted);
-  line-height: 1.8;
-  margin-top: 25px;
+  line-height: 1.65;
+  margin-top: 24px;
 }
 .timeline {
   list-style: none;
@@ -1157,7 +1165,7 @@ h2 span {
 .timeline p {
   font-size: 14px;
   color: var(--muted);
-  line-height: 1.75;
+  line-height: 1.65;
 }
 .opensource-header {
   display: flex;
@@ -1166,10 +1174,10 @@ h2 span {
   gap: 30px;
 }
 .open-intro {
-  margin-top: 25px;
+  margin-top: 24px;
   color: var(--muted);
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.65;
 }
 .repo-grid {
   display: grid;
@@ -1179,7 +1187,7 @@ h2 span {
 }
 .repo-card {
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-card);
   background: #161615;
   padding: 23px;
   display: flex;
@@ -1215,11 +1223,11 @@ h2 span {
 .repo-meta {
   display: flex;
   justify-content: space-between;
-  margin-top: 25px;
+  margin-top: 24px;
   font-size: 10px;
   font-family: var(--font-label);
   font-weight: 600;
-  color: #8e8d82;
+  color: var(--quiet);
   gap: 9px;
 }
 .repo-meta > span:first-child {
@@ -1253,14 +1261,14 @@ h2 span {
 }
 .contact-title h2 {
   font-size: clamp(3rem, 6.7vw, 5.5rem);
-  letter-spacing: -0.06em;
+  letter-spacing: -0.045em;
   line-height: 1.05;
 }
 .contact-title h2 em {
   font-family: Georgia, serif;
   color: var(--accent);
   font-weight: 400;
-  letter-spacing: -0.07em;
+  letter-spacing: -0.05em;
 }
 .contact-orb {
   width: 104px;
@@ -1289,7 +1297,7 @@ h2 span {
 }
 .contact-bottom > p {
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.65;
   color: var(--muted);
 }
 .email-link {
@@ -1311,6 +1319,7 @@ h2 span {
 }
 .footer .wordmark {
   font-size: 24px;
+  padding-block: 10px;
 }
 .footer p {
   font-size: 12px;
@@ -1327,6 +1336,12 @@ h2 span {
   display: flex;
   align-items: center;
   gap: 5px;
+  min-height: 44px;
+}
+.footer nav a.back-to-top {
+  justify-content: center;
+  min-width: 44px;
+  margin-right: -12px;
 }
 .skip-link {
   position: fixed;
@@ -1334,6 +1349,7 @@ h2 span {
   left: 12px;
   z-index: 100;
   padding: 12px 20px;
+  border-radius: var(--radius-pill);
   background: var(--fg);
   color: var(--bg);
   transform: translateY(-200%);
@@ -1443,10 +1459,10 @@ h2 span {
   }
   .nav-contact {
     margin-left: auto;
-    margin-right: 14px;
-    font-size: 12px;
-    padding: 8px 13px;
-    gap: 12px;
+    margin-right: 6px;
+    font-size: 13px;
+    padding: 8px 15px;
+    gap: 8px;
   }
   .menu-toggle {
     display: grid;
@@ -1454,28 +1470,39 @@ h2 span {
     background: none;
     border: none;
     color: var(--fg);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    margin-right: -11px;
   }
+  /* A full-height sheet: large, easy targets and nothing competing behind it. */
   .mobile-nav:not([hidden]) {
     display: flex;
     position: absolute;
     top: 72px;
     left: -20px;
     right: -20px;
-    background: #171716;
-    border-bottom: 1px solid #3f3d36;
+    height: calc(100dvh - 72px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Opaque: the header's own blur would stop a nested backdrop blur from reaching the page. */
+    background: var(--bg);
+    border-top: 1px solid var(--line);
     flex-direction: column;
-    padding: 16px 24px 23px;
-    box-shadow: 0 24px 30px #0005;
+    padding: 12px 20px calc(32px + env(safe-area-inset-bottom));
   }
   .mobile-nav a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 16px;
-    padding: 12px 4px;
-    border-bottom: 1px solid #2a2a27;
+    min-height: 60px;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-nav a svg {
+    color: var(--quiet);
   }
   .hero {
     padding-top: 56px;
@@ -1491,7 +1518,7 @@ h2 span {
   }
   h1 {
     font-size: clamp(3.45rem, 11.8vw, 5rem);
-    letter-spacing: -0.068em;
+    letter-spacing: -0.05em;
   }
   h1 > span {
     font-size: clamp(1.3rem, 4.8vw, 2rem);
@@ -1499,20 +1526,20 @@ h2 span {
     letter-spacing: -0.045em;
   }
   .hero-intro {
-    font-size: 15px;
-    line-height: 1.85;
+    font-size: 17px;
+    line-height: 1.6;
     max-width: 420px;
     margin-top: 24px;
   }
   .hero-actions {
-    gap: 9px;
+    gap: 10px;
     flex-wrap: wrap;
-    margin-top: 26px;
+    margin-top: 28px;
   }
   .hero-actions .button {
-    padding: 11px 15px;
-    font-size: 13px;
-    gap: 9px;
+    padding: 11px 18px;
+    font-size: 14px;
+    gap: 8px;
   }
   .hero-contact {
     padding: 11px 7px;
@@ -1594,10 +1621,6 @@ h2 span {
     right: 145px;
     top: 78px;
   }
-  .section-space {
-    margin-top: 65px;
-    padding-top: 60px;
-  }
   .about-grid,
   .journey-grid {
     grid-template-columns: 1fr;
@@ -1618,7 +1641,7 @@ h2 span {
     padding-top: 0;
   }
   .about-copy > p:first-child {
-    font-size: 18px;
+    font-size: 19px;
   }
   .about-copy > p:nth-child(2) {
     font-size: 14px;
@@ -1760,11 +1783,11 @@ h2 span {
     gap: 5px;
   }
   .hero-contact {
-    font-size: 12px;
+    font-size: 13px;
   }
   .hero-actions .button {
-    font-size: 12px;
-    padding: 10px 12px;
+    font-size: 13px;
+    padding: 10px 15px;
   }
   .phone-front {
     right: 9px;
@@ -1787,11 +1810,8 @@ h2 span {
     font-size: 2.5rem;
   }
   .discipline-pair {
-    gap: 14px;
-    font-size: 11px;
-  }
-  .hero-footnote > a {
-    font-size: 8px;
+    gap: 10px;
+    font-size: 12px;
   }
   .contact-title h2 {
     font-size: 2.7rem;
@@ -1885,24 +1905,28 @@ h2 span {
     max-width: 290px;
     font-size: 1rem;
   }
+  /* Labels never drop below 12px; long ones wrap instead. */
   .hero-eyebrow {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
   }
   .hero-footnote {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
   .hero-footnote a {
     font-size: inherit;
   }
   .work-caption {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     gap: 14px;
   }
   .timeline-period {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
+  /* One column, so descriptions get the full width of the phone. */
   .timeline li {
-    grid-template-columns: 75px 1fr;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
   .email-link {
     font-size: 0.875rem;
@@ -1913,4 +1937,21 @@ h2 span {
   .section-description {
     max-width: 320px;
   }
+}
+
+/* Inline text links keep their visual size but get a 44px tall hit area. */
+.text-link,
+.hero-contact,
+.hero-footnote a,
+.github-note > a,
+.email-link {
+  position: relative;
+}
+.text-link::after,
+.hero-footnote a::after,
+.github-note > a::after,
+.email-link::after {
+  content: '';
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2)) -6px;
 }

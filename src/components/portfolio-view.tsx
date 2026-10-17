@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   ArrowDown,
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
   Code2,
   Github,
@@ -422,8 +423,8 @@ export function PortfolioView({ content }: { content: Content }) {
             )}
             {sections.contact && <a href="#contact">Contact</a>}
             <a href="/admin/">Admin</a>
-            <a href="#top" aria-label="Back to top">
-              ↑
+            <a href="#top" className="back-to-top" aria-label="Back to top">
+              <ArrowUp size={16} aria-hidden="true" />
             </a>
           </nav>
         </footer>

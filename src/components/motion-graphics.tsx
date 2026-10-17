@@ -560,8 +560,9 @@ export function ScrollEffects() {
   return <div ref={tint} className="page-tint" aria-hidden="true" />;
 }
 
-const decodeTargets =
-  '.section-label, .work-caption > span, .chapter-rule > span, .index-header > span, .stage-label, .timeline-period';
+// Only labels hidden from assistive technology scramble, so screen readers never meet the
+// half-decoded text, and the effect stays an accent on the project stages.
+const decodeTargets = '.chapter-rule > span, .stage-label';
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const symbols = '#%&*+=/<>';
 const pick = (set: string) => set[Math.floor(Math.random() * set.length)];
